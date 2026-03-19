@@ -1,0 +1,10 @@
+# cli_def_minimum.toml
+
+title = "CLI definition"
+
+[cli]
+"key"="MyCLI"
+"help"="HELP of my CLI"
+"args"= [
+    {"key"="your_name", "mult"="1", "type"="str"},
+]

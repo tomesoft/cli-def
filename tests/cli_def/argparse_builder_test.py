@@ -14,6 +14,10 @@ def minimum_cli_def_path() -> str:
     return "tests/data/cli_def_minimum.toml"
     
 @fixture
+def hello_world_cli_def_path() -> str:
+    return "tests/data/cli_def_hello_world.toml"
+    
+@fixture
 def simple_cli_def_path() -> str:
     return "tests/data/cli_def_simple.toml"
 
@@ -32,6 +36,15 @@ def subcommand_cli_def_path() -> str:
 # def sample_cli_definition_path() -> str:
 #     #return Path.relative_to(Path.cwd(), "resource/test.toml")
 #     return "resources/test.toml"
+
+def test_arg_parser_hello_world(hello_world_cli_def_path):
+    parser = CliDefParser()
+    cliDef = parser.parse_from_toml(hello_world_cli_def_path)
+    builder = ArgparseBuilder()
+    arg_parser = builder.build_argparse(cliDef)
+
+    parsed = arg_parser.parse_args(["John"])
+    assert "John" in parsed.your_name
 
 
 def test_arg_parser_minimum(minimum_cli_def_path):

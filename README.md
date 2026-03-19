@@ -18,38 +18,6 @@ A declarative DSL for defining CLI structures and generating command-line interf
 ---
 
 ## 📦 Installation
-
-### Core (argparse only)
-
-```bash
-pip install cli-def
-```
-
-### With Click support
-```bash
-pip install cli-def[click]
-```
-
-# cli-def
-
-A declarative DSL for defining CLI structures and generating command-line interfaces for `argparse` and `click`.
-
----
-
-## ✨ Features
-
-- Define CLI structure declaratively (TOML / Python models)
-- Generate CLI implementations for:
-  - `argparse` (standard library, no dependencies)
-  - `click` (optional dependency)
-- Separation of:
-  - CLI definition (DSL)
-  - Runtime implementation (builders)
-- Extensible architecture for additional backends
-
----
-
-## 📦 Installation
 ### Core (argparse only)
 ```bash
 pip install cli-def
@@ -65,26 +33,27 @@ pip install cli-def[click]
 ## 🚀 Quick Example
 ### Define CLI (TOML)
 ```toml
-[command]
-name = "hello"
-
-[[command.arguments]]
-name = "--name"
-type = "str"
-default = "world"
+[cli]
+"key"="MyCLI"
+"help"="HELP of my CLI"
+"args"= [
+    {"key"="your_name", "mult"="1", "type"="str"},
+]
 ```
 
 ### Build CLI (argparse)
 
 ```py
-from cli_def.parsers import parse
-from cli_def.argparse import build
+from cli_def import CliDefParser
+from cli_def.argparse import ArgparseBuilder
 
-cli_def = parse("cli.toml")
-parser = build(cli_def)
+cli_def_parser = CliDefParser()
+cli_def = cli_def_parser.parser_from_toml("cli.toml")
+builder = ArgparserBuider()
+parser = builder.build_argparser(cli_def)
 
 args = parser.parse_args()
-print(f"Hello {args.name}")
+print(f"Hello {args.your_name}")
 ```
 
 ---
