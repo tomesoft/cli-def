@@ -1,0 +1,26 @@
+# test.toml
+
+title = "CLI definition"
+
+[cli] # cli[.<command>[.<subcommand>]]
+"key"="MyCLI"
+"help"="HELP"
+# "args"= [
+#     {"key"="positional_param1", "mult"="1", "type"="str", "spec_type"="path"},
+#     {"key"="optional_option", "option"="--option", "mult"="?", "type"="str"},
+#     {"key"="flag_option", "option"="--flag", "type"="bool", "default"=false},
+# ]
+
+[cli.command1]
+"help"="HELP of command1"
+
+[cli.command2]
+"help"="HELP of command2"
+"args"= [
+    {"key"="positional_param1", "mult"="1", "type"="str", "spec_type"="path"},
+    {"key"="optional_option", "option"="--option", "mult"="?", "type"="str"},
+    {"key"="flag_option", "is_flag"=true, "option"="--flag", "default"=false},
+]
+
+[cli.command3]
+"help"="HELP of command3"

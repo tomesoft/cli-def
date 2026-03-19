@@ -1,0 +1,17 @@
+[project]
+name = "cli-def"
+version = "0.1.0"
+description = "A declarative DSL for defining CLI structures and generating argparse/click interfaces"
+requires-python = ">=3.9"
+authors = [{name="Junichi Okadome"}]
+dependencies = []
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.optional-dependencies]
+click = ["click>=8.0"]

@@ -1,0 +1,7 @@
+# cli_def_minimum.toml
+
+title = "CLI definition"
+
+[cli] # cli[.<command>[.<subcommand>]]
+"key"="MyCLI"
+"help"="HELP"

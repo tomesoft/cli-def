@@ -1,0 +1,24 @@
+# test.toml
+
+title = "CLI definition"
+
+[cli] # cli[.<command>[.<subcommand>]]
+"key"="MyCLI"
+"help"="HELP"
+"group"="command"
+
+[cli._command] # startswith "_" means command template
+"args"= [ # common args for command
+    {"key"="positional_param1", "mult"="1", "type"="str", "spec_type"="path"},
+    {"key"="optional_option", "option"="--option", "mult"="?", "type"="str"},
+    {"key"="flag_option", "option"="--flag", "is_flag"=true,  "default"=false},
+]
+
+[cli.command1]
+"help"="HELP of command1"
+
+[cli.command2]
+"help"="HELP of command2"
+
+[cli.command3]
+"help"="HELP of command3"
