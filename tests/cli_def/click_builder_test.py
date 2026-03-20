@@ -17,6 +17,10 @@ def minimum_cli_def_path() -> str:
     return "tests/data/cli_def_minimum.toml"
     
 @fixture
+def hello_world_cli_def_path() -> str:
+    return "tests/data/cli_def_hello_world.toml"
+
+@fixture
 def simple_cli_def_path() -> str:
     return "tests/data/cli_def_simple.toml"
 
@@ -32,16 +36,35 @@ def command_w_template_cli_def_path() -> str:
 def subcommand_cli_def_path() -> str:
     return "tests/data/cli_def_subcommand.toml"
 
+@fixture
+def subcommand_w_template_cli_def_path() -> str:
+    return "tests/data/cli_def_subcommand_w_template.toml"
+
 # def sample_cli_definition_path() -> str:
 #     #return Path.relative_to(Path.cwd(), "resource/test.toml")
 #     return "resources/test.toml"
 
-# whether key:val entry is in output
+# helper method whether key:val entry is in output
 def is_entry_in(key: str, val: Any, output: str) -> Any:
     return re.search(f"{key!r}: {val!r}", output)
 
 
-def test_arg_parser_minimum(minimum_cli_def_path):
+def test_click_builder_hello_world(hello_world_cli_def_path):
+    parser = CliDefParser()
+    cliDef = parser.parse_from_toml(hello_world_cli_def_path)
+    assert cliDef is not None
+    builder = ClickBuilder()
+    cli = builder.build_click(cliDef)
+    assert cli is not None
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["John"])
+    assert result.exit_code == 0,result.output
+
+    assert is_entry_in("your_name", "John", result.output), result.output
+
+
+def test_click_builder_minimum(minimum_cli_def_path):
     parser = CliDefParser()
     cliDef = parser.parse_from_toml(minimum_cli_def_path)
     assert cliDef is not None
@@ -54,7 +77,6 @@ def test_arg_parser_minimum(minimum_cli_def_path):
 
     runner = CliRunner()
     result = runner.invoke(cli, ["--help"])
-
     assert result.exit_code == 0,result.output
     assert "Usage" in result.output, result.output
 
@@ -62,8 +84,11 @@ def test_arg_parser_minimum(minimum_cli_def_path):
     assert result.exit_code == 0,result.output
     assert "/MyCLI " in result.output, result.output
 
+    result = runner.invoke(cli, ["unexpected_param"])
+    assert result.exit_code == 2,result.output
 
-def test_cli_def_parser_simple(simple_cli_def_path):
+
+def test_click_builder_simple(simple_cli_def_path):
     parser = CliDefParser()
     cliDef = parser.parse_from_toml(simple_cli_def_path)
     assert cliDef is not None
@@ -101,48 +126,12 @@ def test_cli_def_parser_simple(simple_cli_def_path):
     assert is_entry_in("flag_option", True, result.output)
     assert is_entry_in("choice_option", "c", result.output)
 
-
-    result = runner.invoke(cli, ["param1", "param2"])
+    result = runner.invoke(cli, ["param1", "unexpected_param"])
     assert result.exit_code == 2, result.output
 
-#     input1 = ["param1", "param2"]
-#     parsed, remain = arg_parser.parse_known_args(input1)
-#     assert "param1" in parsed.positional_param1
-#     assert parsed.optional_option is None
-#     assert parsed.flag_option == False
-#     assert parsed.choice_option == "a"
-#     assert len(remain) == 1
-#     assert remain == ["param2"]
-
-#     input2 = ["param1", "param2", "--option", "value_for_option"]
-#     parsed, remain = arg_parser.parse_known_args(input2)
-#     assert "param1" in parsed.positional_param1
-#     assert parsed.optional_option == "value_for_option"
-#     assert parsed.flag_option == False
-#     assert parsed.choice_option == "a"
-#     assert len(remain) == 1
-#     assert remain == ["param2"]
-
-#     input3 = ["param1", "param2", "--option", "value_for_option", "--flag"]
-#     parsed, remain = arg_parser.parse_known_args(input3)
-#     assert "param1" in parsed.positional_param1
-#     assert parsed.optional_option == "value_for_option"
-#     assert parsed.flag_option == True
-#     assert parsed.choice_option == "a"
-#     assert len(remain) == 1
-#     assert remain == ["param2"]
-
-#     input4 = ["param1", "param2", "--option", "value_for_option", "--flag", "--choice", "b"]
-#     parsed, remain = arg_parser.parse_known_args(input4)
-#     assert "param1" in parsed.positional_param1
-#     assert parsed.optional_option == "value_for_option"
-#     assert parsed.flag_option == True
-#     assert parsed.choice_option == "b"
-#     assert len(remain) == 1
-#     assert remain == ["param2"]
 
     
-def test_arg_parser_command(command_cli_def_path):
+def test_click_builder_command(command_cli_def_path):
     parser = CliDefParser()
     cliDef = parser.parse_from_toml(command_cli_def_path)
     assert cliDef is not None
@@ -158,60 +147,83 @@ def test_arg_parser_command(command_cli_def_path):
 
     assert result.exit_code == 0, result.output
     assert "/MyCLI/command1" in result.output, result.output
-#     input1 = ["command1", "param1"]
-#     parsed, remain = arg_parser.parse_known_args(input1)
-#     assert parsed.command == "command1", parsed
-#     assert len(remain) == 1
-#     assert "param1" in remain
 
-#     input2 = ["command2", "param1", "--option", "value_of_option", "--flag"]
-#     parsed, remain = arg_parser.parse_known_args(input2)
-#     assert parsed.command == "command2", parsed
-#     assert "param1" in parsed.positional_param1
-#     assert parsed.optional_option == "value_of_option"
-#     assert parsed.flag_option == True
-#     assert len(remain) == 0
+    result = runner.invoke(cli, ["command1", "unexpected_param"])
+    assert result.exit_code == 2, result.output
 
-#     input3 = ["command3", "param1", "--option", "value_of_option", "--flag"]
-#     parsed, remain = arg_parser.parse_known_args(input3)
-#     assert parsed.command == "command3", parsed
-#     assert len(remain) == 4
-#     assert remain == ["param1", "--option", "value_of_option", "--flag"]
+    result = runner.invoke(cli, ["command2", "param1"])
+
+    assert result.exit_code == 0, result.output
+    assert "/MyCLI/command2 " in result.output, result.output
+    assert is_entry_in("positional_param1", "param1", result.output)
+    assert is_entry_in("optional_option", None, result.output)
+    assert is_entry_in("flag_option", False, result.output)
+    assert is_entry_in("choice_option", "a", result.output)
+
+    input2 = ["command2", "param1", "--option", "value_of_option", "--flag", "--choice", "c"]
+    result = runner.invoke(cli, input2)
+
+    assert result.exit_code == 0, result.output
+    assert "/MyCLI/command2 " in result.output, result.output
+    assert is_entry_in("positional_param1", "param1", result.output)
+    assert is_entry_in("optional_option", "value_of_option", result.output)
+    assert is_entry_in("flag_option", True, result.output)
+    assert is_entry_in("choice_option", "c", result.output)
+
+    result = runner.invoke(cli, ["command3", "unexpected_param"])
+    assert result.exit_code == 2, result.output
 
 
-# def test_arg_parser_command_w_template(command_w_template_cli_def_path):
-#     cliDef = parse_cli_definition(command_w_template_cli_def_path)
-#     assert cliDef is not None
-#     builder = ClickBuilder()
-#     arg_parser = builder.build_click(cliDef)
-#     assert arg_parser is not None
+def test_click_builder_command_w_template(command_w_template_cli_def_path):
+    parser = CliDefParser()
+    cliDef = parser.parse_from_toml(command_w_template_cli_def_path)
+    assert cliDef is not None
+    builder = ClickBuilder()
+    cli = builder.build_click(cliDef)
+    assert cli is not None
 
-#     for node in cliDef.iter_all_nodes():
-#         assert node.defpath in builder.defpath_mapping
+    for node in cliDef.iter_all_nodes():
+        assert node.defpath in builder.defpath_mapping
 
-#     input1 = ["command1", "param1"]
-#     parsed, remain = arg_parser.parse_known_args(input1)
-#     assert parsed.command == "command1", parsed
-#     assert "param1" in parsed.positional_param1
-#     assert parsed.optional_option is None
-#     assert parsed.flag_option == False
-#     assert len(remain) == 0
+    runner = CliRunner()
 
-#     input2 = ["command2", "param1", "--option", "value_of_option", "--flag"]
-#     parsed, remain = arg_parser.parse_known_args(input2)
-#     assert parsed.command == "command2", parsed
-#     assert "param1" in parsed.positional_param1
-#     assert parsed.optional_option == "value_of_option"
-#     assert parsed.flag_option == True
-#     assert len(remain) == 0
+    input1 = ["command1", "param1"]
+    result = runner.invoke(cli, input1)
+    assert result.exit_code == 0, result.output
+    assert "/MyCLI/command1" in result.output, result.output
+    assert is_entry_in("positional_param1", "param1", result.output)
+    assert is_entry_in("optional_option", None, result.output)
+    assert is_entry_in("flag_option", False, result.output)
+    assert is_entry_in("choice_option", "a", result.output)
 
-#     input3 = ["command3", "param1", "--option", "value_of_option", "--flag"]
-#     parsed, remain = arg_parser.parse_known_args(input3)
-#     assert parsed.command == "command3", parsed
-#     assert "param1" in parsed.positional_param1
-#     assert parsed.optional_option == "value_of_option"
-#     assert parsed.flag_option == True
-#     assert len(remain) == 0
+
+    input2 = ["command2", "param1", "--option", "value_of_option", "--flag", "--choice", "b"]
+    result = runner.invoke(cli, input2)
+    assert result.exit_code == 0, result.output
+    assert "/MyCLI/command2" in result.output, result.output
+    assert is_entry_in("positional_param1", "param1", result.output)
+    assert is_entry_in("optional_option", "value_of_option", result.output)
+    assert is_entry_in("flag_option", True, result.output)
+    assert is_entry_in("choice_option", "b", result.output)
+
+
+    input3 = ["command3", "param1", "--option", "value_of_option", "--flag", "--choice", "c"]
+    result = runner.invoke(cli, input3)
+    assert result.exit_code == 2, result.output
+    input3_2 = ["command3", "--flag", "--choice", "c"]
+    result = runner.invoke(cli, input3_2)
+    assert result.exit_code == 0, result.output
+    assert "/MyCLI/command3" in result.output, result.output
+    assert is_entry_in("flag_option", True, result.output)
+    assert is_entry_in("choice_option", "c", result.output)
+
+    input4 = ["command4", "--flag", "--choice", "c"]
+    result = runner.invoke(cli, input4)
+    assert result.exit_code == 2, result.output
+    input4_2 = ["command4"]
+    result = runner.invoke(cli, input4_2)
+    assert result.exit_code == 0, result.output
+    assert "/MyCLI/command4" in result.output, result.output
 
 
 def test_arg_parser_subcommand(subcommand_cli_def_path):
@@ -230,17 +242,63 @@ def test_arg_parser_subcommand(subcommand_cli_def_path):
 
     assert result.exit_code == 0, result.output
     assert "/MyCLI/command1/subcommand1_1" in result.output, result.output
-#     input1 = ["command1", "subcommand1_1"]
-#     parsed, remain = arg_parser.parse_known_args(input1)
-#     assert parsed.command == "command1", parsed
-#     assert parsed.subcommand == "subcommand1_1", parsed
-#     assert len(remain) == 0
 
-#     input1 = ["command1", "subcommand1_2", "param1"]
-#     parsed, remain = arg_parser.parse_known_args(input1)
-#     assert parsed.command == "command1", parsed
-#     assert parsed.subcommand == "subcommand1_2", parsed
-#     assert "param1" in parsed.positional_param1
-#     assert parsed.optional_option is None
-#     assert parsed.flag_option == False
-#     assert len(remain) == 0
+    input2 = ["command1", "subcommand1_2", "param1"]
+    result = runner.invoke(cli, input2)
+    assert result.exit_code == 0, result.output
+    assert "/MyCLI/command1/subcommand1_2" in result.output, result.output
+    assert is_entry_in("positional_param1", "param1", result.output)
+    assert is_entry_in("optional_option", None, result.output)
+    assert is_entry_in("flag_option", False, result.output)
+    assert is_entry_in("choice_option", "a", result.output)
+
+
+def test_arg_parser_subcommand_w_template(subcommand_w_template_cli_def_path):
+    parser = CliDefParser()
+    cliDef = parser.parse_from_toml(subcommand_w_template_cli_def_path)
+    assert cliDef is not None
+    builder = ClickBuilder()
+    cli = builder.build_click(cliDef)
+    assert cli is not None
+
+    for node in cliDef.iter_all_nodes():
+        assert node.defpath in builder.defpath_mapping
+
+    runner = CliRunner()
+    input1 = ["command1", "subcommand1_1", "param1"]
+    result = runner.invoke(cli, input1)
+    assert result.exit_code == 0, result.output
+    assert "/MyCLI/command1/subcommand1_1" in result.output, result.output
+    assert is_entry_in("positional_param1", "param1", result.output)
+    assert is_entry_in("optional_option", None, result.output)
+    assert is_entry_in("flag_option", False, result.output)
+    assert is_entry_in("choice_option", "a", result.output)
+
+    input2 = ["command1", "subcommand1_2", "param1", "--option", "myoption", "--flag", "--choice", "b"]
+    result = runner.invoke(cli, input2)
+    assert result.exit_code == 0, result.output
+    assert "/MyCLI/command1/subcommand1_2" in result.output, result.output
+    assert is_entry_in("positional_param1", "param1", result.output)
+    assert is_entry_in("optional_option", "myoption", result.output)
+    assert is_entry_in("flag_option", True, result.output)
+    assert is_entry_in("choice_option", "b", result.output)
+
+    input3 = ["command1", "subcommand1_3", "param1", "--option", "myoption", "--flag", "--choice", "b"]
+    result = runner.invoke(cli, input3)
+    assert result.exit_code == 2, result.output
+
+    input3_2 = ["command1", "subcommand1_3", "--flag", "--choice", "b"]
+    result = runner.invoke(cli, input3_2)
+    assert result.exit_code == 0, result.output
+    assert "/MyCLI/command1/subcommand1_3" in result.output, result.output
+    assert is_entry_in("flag_option", True, result.output)
+    assert is_entry_in("choice_option", "b", result.output)
+
+    input4 = ["command1", "subcommand1_4", "param1", "--option", "myoption", "--flag", "--choice", "b"]
+    result = runner.invoke(cli, input4)
+    assert result.exit_code == 2, result.output
+
+    input4_2 = ["command1", "subcommand1_4"]
+    result = runner.invoke(cli, input4_2)
+    assert result.exit_code == 0, result.output
+    assert "/MyCLI/command1/subcommand1_4" in result.output, result.output

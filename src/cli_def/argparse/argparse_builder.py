@@ -107,12 +107,12 @@ class ArgparseBuilder:
             return None
 
         # build parent parsers from of template
-        parent_parsers = []
+        parent_parsers_map = {}
         for cmdDef in commandDefs:
             if not cmdDef.is_template:
                 continue
             cmd_templ_parser = self.build_single_command(cmdDef)
-            parent_parsers.append(cmd_templ_parser)
+            parent_parsers_map[cmdDef.key] = cmd_templ_parser
             
         firstCmdDef: CommandDef = commandDefs[0]
         group = (firstCmdDef.parent.group or
@@ -125,6 +125,12 @@ class ArgparseBuilder:
         for cmdDef in commandDefs:
             if cmdDef.is_template:
                 continue
+            # select parent_parsers
+            parent_parsers = []
+            for tmpl in cmdDef.get_templates():
+                if tmpl.key in parent_parsers_map:
+                    parent_parsers.append(parent_parsers_map[tmpl.key])
+
             cmd_parser = self.build_single_command(cmdDef, subparsers, parent_parsers)
             cmd_parsers.append(cmd_parser)
 

@@ -1,6 +1,5 @@
-# cli_def/models/cli_def_node
-# .py
-from typing import Optional, Any, Iterator, Mapping
+# cli_def/models/cli_def_node.py
+from typing import Optional, Any, Iterator, Mapping, Callable, Iterable
 from dataclasses import dataclass, field
 import re
 
@@ -29,12 +28,37 @@ class CliDefNode:
         for child in self.iter_children():
             yield from child.iter_all_nodes()
 
+
     def iter_children(self):
         return iter([])
+
 
     def find(self, path: str) -> "CliDefNode"|None:
         for node in self.iter_all_nodes():
             if node.defpath == path:
                 return node
         return None
+
+
+    def select_first(self, pred: Callable[["CliDefNode"], Any]) -> "CliDefNode" | None:
+        for node in self.iter_all_nodes():
+            if pred(node):
+                return node
+
+
+    def select_all(self, pred: Callable[["CliDefNode"], Any]) -> Iterable["CliDefNode"]:
+        selected = []
+        for node in self.iter_all_nodes():
+            if pred(node):
+                selected.append(node)
+        return selected
+
+
+    def dump_tree(self) -> str:
+        lines = []
+        for node in self.iter_all_nodes():
+            line = "  " * node.deflevel + node.key
+            lines.append(line)
+        return lines
+
 

@@ -1,4 +1,4 @@
-# test.toml
+# cli_def_subcommand.toml
 
 title = "CLI definition"
 
@@ -19,6 +19,7 @@ title = "CLI definition"
     {"key"="positional_param1", "mult"="1", "type"="str", "spec_type"="path"},
     {"key"="optional_option", "option"="--option", "mult"="?", "type"="str"},
     {"key"="flag_option", "is_flag"=true, "option"="--flag", "default"=false},
+    {"key"="choice_option", "option"="--choice", default="a", "choices"=["a", "b", "c"], "mult"="?", "type"="str"},
 ]
 
 

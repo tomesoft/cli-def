@@ -80,6 +80,9 @@ class ClickBuilder:
     def _build_command(self, cmdDef: CommandDef) -> click.Command:
 
         params = [self._build_param(arg) for arg in cmdDef.arguments]
+        # collect arguments from template
+        for tmpl_cmd in cmdDef.get_templates():
+            params.extend([self._build_param(arg) for arg in tmpl_cmd.arguments])
 
         if cmdDef.subcommands:
             grp = click.Group(name=cmdDef.key, help=cmdDef.help, params=params)
