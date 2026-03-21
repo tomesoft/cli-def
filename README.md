@@ -62,7 +62,7 @@ print(f"Hello {args.your_name}")
 
 cli-def introduces a declarative layer for CLI definition.
 
-Instead of writing CLI logic directly in argparse or click, you:
+Instead of writing CLI logic directly in `argparse` or `click`, you:
 
 1. Define structure (commands, arguments, options)
 
@@ -83,10 +83,10 @@ Executable CLI
 
 ```
 cli_def/
-  models/ # Core DSL structures
-  parsers/ # TOML → models
+  models/   # Core DSL structures
+  parsers/  # TOML → models
   argparse/ # argparse builder
-  click/ # click builder (optional)
+  click/    # click builder (optional)
 ```
 
 ## 🔌 Optional Dependencies

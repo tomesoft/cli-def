@@ -3,6 +3,7 @@
 from typing import Mapping, Any, Iterable
 import tomllib
 from pathlib import Path
+import importlib
 import logging
 
 from ..models import (
@@ -22,6 +23,12 @@ class CliDefParser:
             return self.parse_from_mapping(mapping)
         return None
 
+    def parse_from_toml_text(self, toml_text: str) -> CliDef|None:
+        mapping = {}
+        mapping.update(tomllib.loads(toml_text))
+        if "cli" in mapping:
+            return self.parse_from_mapping(mapping)
+        return None
 
     def parse_from_mapping(self, mapping: Mapping[str, Any]) -> CliDef | None:
         cliDef = CliDef()
@@ -86,4 +93,3 @@ class CliDefParser:
             
         return commandDef
 
-        

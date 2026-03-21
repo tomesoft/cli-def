@@ -3,13 +3,13 @@ from typing import Optional, Any, Iterator, Mapping, Iterable
 from dataclasses import dataclass, field
 import re
 
-from .cli_def_node import CliDefNode
+from .abstract_node import CliDefNode, ExecutableNode
 from .argument_def import ArgumentDef
 
 
 
 @dataclass
-class CommandDef(CliDefNode):
+class CommandDef(ExecutableNode):
     is_template: bool = False
     help: Optional[str] = None
     aliases: Optional[list[str]] = None
@@ -31,3 +31,11 @@ class CommandDef(CliDefNode):
             return templates
         inherit_set = set(self.inherit_from)
         return [tmpl for tmpl in templates if tmpl.key in inherit_set]
+
+    def get_command_sequence(self) -> list[str]:
+        key_seq = []
+        node = self
+        while node is not None:
+            key_seq.append(node.key)
+            node = node.parent
+        return list(reversed(key_seq))

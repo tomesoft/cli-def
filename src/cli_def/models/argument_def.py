@@ -3,7 +3,7 @@ from typing import Optional, Any, Iterator, Mapping
 from dataclasses import dataclass, field
 import re
 
-from .cli_def_node import CliDefNode
+from .abstract_node import CliDefNode
 from .mult_def import MultDef
 
 

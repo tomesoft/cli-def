@@ -54,7 +54,7 @@ class CliDefNode:
         return selected
 
 
-    def dump_tree(self) -> str:
+    def dump_tree(self) -> Iterable[str]:
         lines = []
         for node in self.iter_all_nodes():
             line = "  " * node.deflevel + node.key
@@ -62,3 +62,6 @@ class CliDefNode:
         return lines
 
 
+# base class of CliDef and CommandDef
+class ExecutableNode(CliDefNode):
+    entrypoint: Optional[str] = None

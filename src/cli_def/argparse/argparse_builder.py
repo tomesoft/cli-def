@@ -43,6 +43,8 @@ class ArgparseBuilder:
         self.build_arguments(cliDef.arguments, parser)
         self.build_commands(cliDef.commands, parser)
 
+        self._attach_metadata(parser, cliDef, cliDef.get_command_sequence())
+
         return parser
 
 
@@ -165,8 +167,15 @@ class ArgparseBuilder:
         self.build_commands(cmdDef.subcommands, parser)
 
         self._register(cmdDef, parser)
+        self._attach_metadata(parser, cmdDef, cmdDef.get_command_sequence())
 
         return parser
+
+    def _attach_metadata(self, parser, command: CommandDef, path):
+        parser.set_defaults(
+            _path=path,
+            _command=command,   # ← これも入れる（重要）
+        )
 
     def to_nargs(self, mult: MultDef) -> str | int | None:
         if mult is None:
