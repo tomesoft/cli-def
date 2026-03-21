@@ -123,12 +123,9 @@ pip install cli-def[click]
 
 If not installed, importing click-related modules will raise an error.
 
-## 🛠 Roadmap
+## 📌 Roadmap
 
-- [ ] YAML / JSON parser support
-- [ ] Rich help output
-- [ ] CLI schema validation
-- [ ] Plugin system for builders
+- See [TODO.md](./TODO.md) for full roadmap and ideas
 
 ## 🤝 Contributing
 
