@@ -1,81 +1,105 @@
 # TODO
 
-Roadmap and ideas. These are exploratory and not all items are guaranteed to be implemented.
+This is a roadmap and idea list for cli-def.  
+Some items are experimental and not guaranteed to be implemented.
 See [README](README.md) for overview.
 
-## General Concept
-- [x] Declarative CLI definition
-- [x] Command / subcommand definition
-- [x] Positional argument definition
-- [x] Optional argument definition
-- [x] Flag (boolean) argument definition
-- [x] Choice-based argument definition
-- [ ] Command template mechanism  
-  Allows reusable argument definitions shared across commands.
-  - [x] Templates can be defined in the same way as commands  
-    (template keys are prefixed with `_`)
-- [ ] Introspection  
-  Ability to inspect and analyze CLI definitions programmatically
+---
 
-## Parser
-- [x] Parse from .toml files
+## ✅ Done
 
-## AST (Abstract Syntax Tree)
-### Core Nodes
-- [x] CliDef : Root of the CLI definition
-- [x] CommandDef : Command / subcommand definition
-- [x] ArgumentDef : Argument / option definition
+### Core Concept
+- Declarative CLI definition
+- Command / subcommand structure
+- Positional / optional / flag arguments
+- Choice parameters
+- Command templates (inheritance model)
 
-### Extended Definition Vocabulary
-- [x] MultDef : Multiplicity normalization
-- [ ] Handler definition  
-  Defines how a command is executed
-- [ ] Base type definitions  
-  e.g. "str", "int", ...
-- [ ] Specialized type definitions  
-  Higher-level abstractions (e.g. PathSpec for file system paths)
-- [ ] Constraint definitions  
-  e.g. mutually exclusive arguments, required groups, dependencies
+### Parser
+- Parse CLI definitions from TOML
 
-## Built-in Runtime Components
-- [ ] Validator  
-  Validates CLI definitions (structure and semantics)
-- [ ] Evaluator  
-  Evaluates parsed argv against constraints
-- [x] Dispatcher  
-  Dispatches execution to command handlers  
-  cli_def.runtime.Dispatcher provides
-- [x] REPL support  
-  cli_def.runtime.CliSession provides
-- [ ] Runtime hooks / middleware support
-- [ ] Dynamic AST transformation support
+### AST
+- CliDef (root node)
+- CommandDef (command / subcommand)
+- ArgumentDef (argument / option)
+- MultDef (multiplicity normalization)
 
-## Bindings
-- [x] Builder (AST → runtime implementation)
-- [ ] Reverser (runtime implementation → AST)
+### Runtime
+- CliEvent abstraction
+- Dispatcher
+- Entrypoint (`module:function`)
+- Argument normalization based on multiplicity
 
-### argparse
-- [x] Builder (AST → argparse)
-  - [x] ArgparseBuilder
+### Builders
+- ArgparseBuilder
+- ClickBuilder (basic support)
 
-### click
-- [x] Builder (AST → click)
-  - [x] ClickBuilder
+### Tooling
+- REPL (interactive mode)
+- Demo CLI (beginner / advanced)
+- CLI chaining (`run` command)
 
-## API
-- [ ] Public API design (high-level entry points)
-- [ ] Stable interface for parser / builder / dispatcher
+---
 
-## Misc
-- [x] Demo tool (dogfooding CLI)
-  - Dump AST structure
-  - Switch between predefined CLI profiles:
-    - Beginner
-    - Advanced
-- [ ] Interactive mode support
-  - [x] tiny REPL
-  - [ ] integration with prompt_toolkit
-- [ ] Test generator  
-  Generate test cases from CLI definitions
-- [ ] Code generator  
-  Generate CLI code (argparse / click) from definitions
+## 🚧 In Progress
+
+- Click backend parity with argparse
+  - Dispatcher integration
+  - Event consistency
+  - Argument handling alignment
+
+---
+
+## 🟡 Next (High Priority)
+
+### Runtime Features
+- Evaluator
+  - Argument validation
+  - Constraint handling
+  - Exclusive argument groups
+
+- Dispatcher improvements
+  - Middleware / hook system
+  - Pre/post dispatch hooks
+
+---
+
+## 🔵 Next (Medium Priority)
+
+### Definition Extensions
+- Handler definition abstraction (HandlerDef)
+- Base types (str, int, etc.)
+- Spec types (e.g. PathSpec)
+- Constraint definitions
+
+### Tooling
+- Demo improvements
+- CLI inspection tools
+- AST visualization utilities
+
+---
+
+## 🧪 Later (Exploratory)
+
+### Advanced Features
+- Reverse builder
+  - argparse → CliDef AST
+
+- Dynamic CLI
+  - Runtime AST modification
+  - Context-dependent commands
+
+- Interactive Enhancements
+  - Prompt Toolkit integration
+  - Autocomplete / suggestions
+
+- Code Generation
+- Test Generator
+
+---
+
+## 💡 Ideas
+
+- CLI as a runtime platform (not just definition)
+- Middleware-style execution model
+- Plugin system for extensions
