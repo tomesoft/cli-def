@@ -13,11 +13,17 @@ A declarative DSL for defining CLI structures and generating command-line interf
 - Separation of:
   - CLI definition (DSL)
   - Runtime implementation (builders)
-- Extensible architecture for additional backends
+- Built-in runtime system:
+  - Event model (`CliEvent`)
+  - Dispatcher
+  - Entrypoint resolution (`module:function`)
+- Interactive REPL support
+- CLI chaining (execute one CLI from another)
 
 ---
 
 ## 📦 Installation
+
 ### Core (argparse only)
 ```bash
 pip install cli-def
@@ -30,49 +36,113 @@ pip install cli-def[click]
 
 ---
 
+## 🚀 Quick Start (Demo)
+
+Try the interactive demo:
+
+```bash
+cli-def demo beginner
+```
+
+```
+Type 'help' to list commands, 'exit' to exit
+
+demo[beginner]> greet John
+Hello, John!
+```
+
+Advanced demo:
+
+```bash
+cli-def demo advanced
+```
+
+---
+
+## 🖥 Interactive Mode (REPL)
+
+```bash
+cli-def repl --file your_cli.toml
+```
+
+```
+yourcli> help
+yourcli> command arg1 --option value
+```
+
+---
+
+## 🔁 Run Another CLI (CLI chaining)
+
+```bash
+cli-def run example.toml -- command arg1 arg2
+```
+
+- `--` separates cli-def arguments from the target CLI arguments
+- Remaining arguments are forwarded to the next CLI
+
+---
+
+## 🧩 Entrypoint
+
+```toml
+[cli.run]
+entrypoint = "myapp.handlers:run"
+```
+
+Resolved as:
+
+```
+module:function
+```
+
+---
+
 ## 🚀 Quick Example
+
 ### Define CLI (TOML)
+
 ```toml
 [cli]
-"key"="MyCLI"
-"help"="HELP of my CLI"
-"args"= [
-    {"key"="your_name", "mult"="1", "type"="str"},
+key = "MyCLI"
+help = "HELP of my CLI"
+
+[cli.hello]
+args = [
+    {key="name", mult="1", type="str"}
 ]
 ```
 
+---
+
 ### Build CLI (argparse)
 
-```py
+```python
 from cli_def import CliDefParser
 from cli_def.argparse import ArgparseBuilder
 
-cli_def_parser = CliDefParser()
-cli_def = cli_def_parser.parser_from_toml("cli.toml")
-builder = ArgparserBuider()
-parser = builder.build_argparser(cli_def)
+parser = CliDefParser()
+cli_def = parser.parse_from_toml("cli.toml")
 
-args = parser.parse_args()
-print(f"Hello {args.your_name}")
+builder = ArgparseBuilder()
+argparser = builder.build_argparse(cli_def)
+
+args = argparser.parse_args()
+print(f"Hello {args.name}")
 ```
 
 ---
 
 ## 🧠 Concept
 
-cli-def introduces a declarative layer for CLI definition.
-
-Instead of writing CLI logic directly in `argparse` or `click`, you:
-
-1. Define structure (commands, arguments, options)
-
-2. Convert it into a runtime implementation
 ```
 TOML / Model
 ↓
 CliDef (AST)
 ↓
 Builder (argparse / click)
+↓
+Runtime (CliEvent / Dispatcher)
 ↓
 Executable CLI
 ```
@@ -83,57 +153,50 @@ Executable CLI
 
 ```
 cli_def/
-  models/   # Core DSL structures
-  parsers/  # TOML → models
-  argparse/ # argparse builder
-  click/    # click builder (optional)
+  models/
+  parsers/
+  argparse/
+  click/
+  runtime/
 ```
+
+---
 
 ## 🔌 Optional Dependencies
 
-Feature: click backend
-
-Install: pip install cli-def[click]
+```bash
+pip install cli-def[click]
+```
 
 ---
 
 ## 🧪 Testing
 
-Run all tests:
 ```bash
 pytest
 ```
 
-Run tests excluding click:
 ```bash
 pytest -m "not click"
 ```
 
-Run only click-related tests:
 ```bash
 pytest -m click
 ```
 
-## ⚠️ click Support
-
-The click backend requires the optional dependency:
-```bash
-pip install cli-def[click]
-```
-
-If not installed, importing click-related modules will raise an error.
+---
 
 ## 📌 Roadmap
 
-- See [TODO.md](./TODO.md) for full roadmap and ideas
+- See [TODO.md](./TODO.md)
+
+---
 
 ## 🤝 Contributing
 
 Contributions are welcome!
 
-- Open issues
-- Submit pull requests
-- Share feedback
+---
 
 ## 📄 License
 

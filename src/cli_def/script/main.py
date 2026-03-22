@@ -1,9 +1,19 @@
 # cli_def/script/main.py
 import argparse
 
+from importlib import resources
+
 from ..parsers import CliDefParser
 from ..models import CliDef
 from ..argparse import ArgparseBuilder
+from ..runtime import (
+    CliEvent,
+    Dispatcher,
+    CliSession,
+)
+from ..runtime.utils import (
+    execute_cli,
+)
 
 CLI_DEF_TOML_TEXT="""
 title = "CLI definition"
@@ -20,48 +30,111 @@ title = "CLI definition"
 [cli.command2]
 "help"="HELP of command2"
 "args"= [
-    {"key"="positional_param2", "mult"="1", "type"="str"},
+    {"key"="positional_param2", "mult"="*", "type"="str"},
 ]
 "entrypoint"="cli_def.script.main:command2_handler"
 
 """
 
-def command2_handler(event):
+def load_builtin_cli_def(*relative_paths):
+    path = resources.files("cli_def.resources")
+    #print(f"relative_paths: {relative_paths!r}")
+    if len(relative_paths):
+        path = path.joinpath(*relative_paths)
+    else:
+        path = path.joinpath("cli_def.toml")
+    return CliDefParser().parse_from_toml(path)
+
+
+def dump_cli_def(cli_def: CliDef):
+    print("=== loaded cli_def ===")
+    for i, line in enumerate(cli_def.dump_tree(), start=1):
+        print(f"{i}| {line}")
+    print("======================")
+
+
+def command2_handler(event: CliEvent):
     print("=== command2 handler ===")
     print("  PATH:", event.path)
     print("  PARAMS:", event.params)
+    if event.extra_args:
+        print("  EXTRA:", event.extra_args)
 
-def print_handler(event):
-    print("=== my fallback handler ===")
+def print_handler(event: CliEvent):
+    print("=== fallback handler ===")
     print("  PATH:", event.path)
     print("  PARAMS:", event.params)
+    if event.extra_args:
+        print("  EXTRA:", event.extra_args)
 
-def load_definition() -> CliDef:
+
+def load_definition(path_to_toml: str) -> CliDef:
     parser = CliDefParser()
-    #cli_def = parser.parse_from_toml("simple_cli_def.toml")
-    cli_def = parser.parse_from_toml_text(CLI_DEF_TOML_TEXT)
+    if path_to_toml:
+        cli_def = parser.parse_from_toml(path_to_toml)
+    else:
+        cli_def = parser.parse_from_toml_text(CLI_DEF_TOML_TEXT)
     return cli_def
 
-def build_parser(cli_def: CliDef) -> argparse.ArgumentParser:
-    builder = ArgparseBuilder()
-    return builder.build_argparse(cli_def)
+# --------------------------------------------------------------------------------
+# command implementations (specified in cli-def toml)
+# --------------------------------------------------------------------------------
+def run_repl(event: CliEvent):
+    print("=== repl command ===")
+    cli_def = load_definition(
+        event.params.get("cli_def_file")
+    )
+    dump_cli_def(cli_def)
+    print("Type 'help' to list commands, 'exit' to exit")
+    session = CliSession(cli_def, fallback_handler=print_handler)
+    session.repl()
+
+def run_demo(event: CliEvent):
+    profile = event.params.get("profile") or "beginner"
+    cli_def = load_builtin_cli_def("demo", profile + ".toml")
+    dump_cli_def(cli_def)
+    print(f"=== demo: {profile} ===")
+    print("Type 'help' to list commands, 'exit' to exit")
+    # go repl 
+    session = CliSession(cli_def, fallback_handler=print_handler, profile=profile)
+    session.repl(prompt=f"demo[{profile}]> ")
+
+def run_run(event: CliEvent):
+    print("=== run command ===")
+    toml_file = event.params.get("cli_def_file")
+    cli_def = load_definition(toml_file)
+    if cli_def is None:
+        print(f"Error invalid cli-def file: {toml_file}")
+        return
+    dump_cli_def(cli_def)
+    print(f"[run] forwarding args: {event.extra_args}")
+    execute_cli(
+        cli_def,
+        argv=event.extra_args if event.extra_args else [],
+        fallback_handler=print_handler
+    )
+
+def run_dump(event: CliEvent):
+    print("=== dump command ===")
+    toml_file = event.params.get("cli_def_file")
+    cli_def = load_definition(toml_file)
+    if cli_def is None:
+        print(f"Error invalid cli-def file: {toml_file}")
+        return
+    dump_cli_def(cli_def)
 
 
-from cli_def.runtime import Dispatcher
-
+# --------------------------------------------------------------------------------
+# main
+# --------------------------------------------------------------------------------
 def main():
-    cli_def = load_definition()
-    parser = build_parser(cli_def)
-    dispatcher = Dispatcher(cli_def, print_handler)
+    cli_def = load_builtin_cli_def()
 
-    print("=== loaded cli_def ===")
-    for line in cli_def.dump_tree():
-        print(line)
-    print("======================")
+    dump_cli_def(cli_def)
 
-    args = parser.parse_args()
-
-    dispatcher.dispatch(args)
+    execute_cli(cli_def, fallback_handler=print_handler)
 
 if __name__ == "__main__":
     main()
+
+

@@ -1,0 +1,20 @@
+# cli_def/resources/demo/beginner.toml
+
+[cli]
+key = "demo"
+help = "Beginner demo CLI"
+
+[cli.echo]
+help = "Echo message"
+args = [
+  {key="message", mult="*", type="str"}
+]
+entrypoint = "cli_def.demo_handlers:echo"
+
+[cli.greet]
+help = "Greet someone"
+args = [
+  {key="name", mult="?", type="str"},
+  {key="upper", option="--upper", is_flag=true}
+]
+entrypoint = "cli_def.demo_handlers:greet"

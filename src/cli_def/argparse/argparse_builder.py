@@ -1,6 +1,7 @@
 # cli_def/argparse/argparse_builder.py
 from typing import Iterable, Sequence, Any, Mapping
 import argparse
+import logging
 
 from ..models import (
     CliDefNode,
@@ -35,8 +36,10 @@ class ArgparseBuilder:
     def defpath_mapping(self) -> Mapping[str, ArgparseNode]:
         return self._defpath_mapping
 
-    def build_argparse(self, cliDef: CliDef) -> argparse.ArgumentParser:
-        parser = argparse.ArgumentParser()
+    def build_argparse(self, cliDef: CliDef, prog: str = None) -> argparse.ArgumentParser:
+        parser = argparse.ArgumentParser(
+            prog=prog or cliDef.key
+        )
 
         self._register(cliDef, parser)
 
@@ -57,7 +60,7 @@ class ArgparseBuilder:
             return None
         actions = []
         for argDef in argumentDefs:
-            print(f"{argDef.defpath} mult={argDef.mult} nargs={self.to_nargs(argDef.mult)}")
+            logging.debug(f"{argDef.defpath} mult={argDef.mult} nargs={self.to_nargs(argDef.mult)}")
             if argDef.is_positional:
                 # positional paremter
                 action = parser.add_argument(

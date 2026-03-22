@@ -42,8 +42,13 @@ See [README](README.md) for overview.
   Validates CLI definitions (structure and semantics)
 - [ ] Evaluator  
   Evaluates parsed argv against constraints
-- [ ] Dispatcher  
-  Dispatches execution to command handlers
+- [x] Dispatcher  
+  Dispatches execution to command handlers  
+  cli_def.runtime.Dispatcher provides
+- [x] REPL support  
+  cli_def.runtime.CliSession provides
+- [ ] Runtime hooks / middleware support
+- [ ] Dynamic AST transformation support
 
 ## Bindings
 - [x] Builder (AST → runtime implementation)
@@ -62,12 +67,14 @@ See [README](README.md) for overview.
 - [ ] Stable interface for parser / builder / dispatcher
 
 ## Misc
-- [ ] Demo tool (dogfooding CLI)
+- [x] Demo tool (dogfooding CLI)
   - Dump AST structure
   - Switch between predefined CLI profiles:
     - Beginner
     - Advanced
-- [ ] Interactive mode support (e.g. integration with prompt_toolkit)
+- [ ] Interactive mode support
+  - [x] tiny REPL
+  - [ ] integration with prompt_toolkit
 - [ ] Test generator  
   Generate test cases from CLI definitions
 - [ ] Code generator  

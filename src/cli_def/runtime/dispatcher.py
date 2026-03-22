@@ -1,9 +1,14 @@
 # cli_def/runtime/dispatcher.py
-from typing import Callable
+from typing import Callable, Mapping, Any, Sequence
 import importlib
 
 from .event import CliEvent
-from ..models import CliDef, ExecutableNode
+from ..models import (
+    CliDef,
+    ExecutableNode,
+    CommandDef,
+    MultDef,
+)
 
 class Dispatcher:
 
@@ -18,6 +23,9 @@ class Dispatcher:
         print("[fallback handler]")
         print("  PATH:", event.path)
         print("  PARAMS:", event.params)
+        if event.extra_args:
+            print("  EXTRA:", event.extra_args)
+
 
     def _pre_load_entrypoints(self):
         executables = self.cli_def.select_all(
@@ -28,12 +36,14 @@ class Dispatcher:
         for entrypoint in entrypoints:
             self._resolve_handler(entrypoint)
 
-    def dispatch(self, args):
-        event = self._build_event(args)
+
+    def dispatch(self, args, extra_args: Sequence[str] = None) -> Any: # args: argparse.Namespace
+        event = self._build_event(args, extra_args=extra_args)
         handler = self._resolve_handler(event.command.entrypoint) or self.fallback_handler
         return handler(event)
 
-    def _build_event(self, args):
+
+    def _build_event(self, args, extra_args: Sequence[str] = None):
         command = getattr(args, "_command", None)
         path = getattr(args, "_path", None)
 
@@ -46,29 +56,51 @@ class Dispatcher:
                 k not in ("_path", "_command", "command"))
         }
 
-        params = self._normalize(params)
+        params = self._normalize(command, params)
 
         event = CliEvent(
             path=path,
             command=command,
             params=params,
+            event_source=self,
+            extra_args=list(extra_args) if extra_args else None,
         )
 
         return event
 
-    def _normalize(self, params):
+
+    def _normalize(self, command: CommandDef, params: Mapping[str, Any]):
         result = {}
+
+        # key → ArgumentDef のマップ作る
+        arg_map = {arg.key: arg for arg in command.arguments}
+
         for k, v in params.items():
-            if isinstance(v, list) and len(v) == 1:
-                result[k] = v[0]
+            arg = arg_map.get(k)
+
+            if arg is None:
+                result[k] = v
+                continue
+
+            mult: MultDef = arg.mult
+
+            # 👇 ここが本質
+            if mult.is_fixed and mult.lower == 1:
+                if isinstance(v, list):
+                    result[k] = v[0] if v else None
+                else:
+                    result[k] = v
             else:
                 result[k] = v
+
         return result
 
 
     def _resolve_handler(self, handler_str: str):
         if handler_str is None:
             return None
+
+        # at first find in cache
         if handler_str in self._handler_cache:
             return self._handler_cache[handler_str]
 
