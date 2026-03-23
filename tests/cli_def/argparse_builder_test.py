@@ -1,3 +1,4 @@
+# tests/cli_def/argparse_guilder_test.py
 import pytest
 from pytest import fixture
 from pathlib import Path
@@ -9,33 +10,36 @@ from cli_def import (
 )
 from cli_def.argparse import ArgparseBuilder
 
+def data_path() -> Path:
+    return Path(__file__).parent.parent / "data"
+
 @fixture
 def minimum_cli_def_path() -> str:
-    return "tests/data/cli_def_minimum.toml"
-    
+    return str(data_path() / "cli_def_minimum.toml")
+
 @fixture
 def hello_world_cli_def_path() -> str:
-    return "tests/data/cli_def_hello_world.toml"
+    return str(data_path() / "cli_def_hello_world.toml")
     
 @fixture
 def simple_cli_def_path() -> str:
-    return "tests/data/cli_def_simple.toml"
+    return str(data_path() / "cli_def_simple.toml")
 
 @fixture
 def command_cli_def_path() -> str:
-    return "tests/data/cli_def_command.toml"
+    return str(data_path() / "cli_def_command.toml")
 
 @fixture
 def command_w_template_cli_def_path() -> str:
-    return "tests/data/cli_def_command_w_template.toml"
+    return str(data_path() / "cli_def_command_w_template.toml")
 
 @fixture
 def subcommand_cli_def_path() -> str:
-    return "tests/data/cli_def_subcommand.toml"
+    return str(data_path() / "cli_def_subcommand.toml")
 
 @fixture
 def subcommand_w_template_cli_def_path() -> str:
-    return "tests/data/cli_def_subcommand_w_template.toml"
+    return str(data_path() / "cli_def_subcommand_w_template.toml")
 
 # def sample_cli_definition_path() -> str:
 #     #return Path.relative_to(Path.cwd(), "resource/test.toml")

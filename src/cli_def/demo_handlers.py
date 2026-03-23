@@ -1,14 +1,16 @@
 # cli_def/demo_handlers.py
 
+from .runtime import CliEvent
+
 # --------------------------------------------------------------------------------
 # handlers for beginner profile
 # --------------------------------------------------------------------------------
-def echo(event):
+def echo(event: CliEvent):
     msg = event.params.get("message", [])
     print(" ".join(msg))
 
 
-def greet(event):
+def greet(event: CliEvent):
     name = event.params.get("name") or "world"
     text = f"Hello, {name}!"
 
@@ -21,21 +23,21 @@ def greet(event):
 # --------------------------------------------------------------------------------
 # handlers for advanced profile
 # --------------------------------------------------------------------------------
-def build(event):
+def build(event: CliEvent):
     target = event.params["target"]
     verbose = event.params.get("verbose", False)
 
     print(f"[build] target={target} verbose={verbose}")
 
 
-def test(event):
+def test(event: CliEvent):
     pattern = event.params.get("pattern") or "all"
     verbose = event.params.get("verbose", False)
 
     print(f"[test] pattern={pattern} verbose={verbose}")
 
 
-def deploy(event):
+def deploy(event: CliEvent):
     env = event.params.get("env") or "dev"
     force = event.params.get("force", False)
 

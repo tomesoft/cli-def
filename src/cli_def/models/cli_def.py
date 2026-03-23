@@ -8,6 +8,10 @@ from .command_def import CommandDef
 from .argument_def import ArgumentDef
 
 
+# --------------------------------------------------------------------------------
+# CliDef
+# a concrete class for root CLI definition
+# --------------------------------------------------------------------------------
 @dataclass
 class CliDef(ExecutableNode):
     help: Optional[str] = None

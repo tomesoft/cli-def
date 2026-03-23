@@ -8,6 +8,10 @@ from .argument_def import ArgumentDef
 
 
 
+# --------------------------------------------------------------------------------
+# CliDef
+# a concrete class for command/subcommand definition
+# --------------------------------------------------------------------------------
 @dataclass
 class CommandDef(ExecutableNode):
     is_template: bool = False

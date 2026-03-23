@@ -74,5 +74,6 @@ class MultDef:
         
         return f"{lower_str}..{upper_str}"
 
+
     def to_tuple(self) -> Tuple[int, int|None]:
         return (self.lower, self.upper)

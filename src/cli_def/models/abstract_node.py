@@ -3,6 +3,10 @@ from typing import Optional, Any, Iterator, Mapping, Callable, Iterable
 from dataclasses import dataclass, field
 import re
 
+# --------------------------------------------------------------------------------
+# CliDefNode class
+# base class of any CliDef node
+# --------------------------------------------------------------------------------
 @dataclass
 class CliDefNode:
     key: str = None
@@ -62,6 +66,9 @@ class CliDefNode:
         return lines
 
 
+# --------------------------------------------------------------------------------
+# ExecutableNode
 # base class of CliDef and CommandDef
+# --------------------------------------------------------------------------------
 class ExecutableNode(CliDefNode):
     entrypoint: Optional[str] = None

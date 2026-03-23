@@ -1,10 +1,16 @@
 import pytest
+
+pytestmark = pytest.mark.click
+pytest.importorskip("click")
+
 from typing import Any
 from pytest import fixture
 from pathlib import Path
+import re
+
 import click
 from click.testing import CliRunner
-import re
+
 
 from cli_def import (
     CliDefParser,
@@ -12,33 +18,36 @@ from cli_def import (
 )
 from cli_def.click import ClickBuilder
 
-@fixture
-def minimum_cli_def_path() -> str:
-    return "tests/data/cli_def_minimum.toml"
-    
-@fixture
-def hello_world_cli_def_path() -> str:
-    return "tests/data/cli_def_hello_world.toml"
+def data_path() -> Path:
+    return Path(__file__).parent.parent / "data"
 
 @fixture
+def minimum_cli_def_path() -> str:
+    return str(data_path() / "cli_def_minimum.toml")
+
+@fixture
+def hello_world_cli_def_path() -> str:
+    return str(data_path() / "cli_def_hello_world.toml")
+    
+@fixture
 def simple_cli_def_path() -> str:
-    return "tests/data/cli_def_simple.toml"
+    return str(data_path() / "cli_def_simple.toml")
 
 @fixture
 def command_cli_def_path() -> str:
-    return "tests/data/cli_def_command.toml"
+    return str(data_path() / "cli_def_command.toml")
 
 @fixture
 def command_w_template_cli_def_path() -> str:
-    return "tests/data/cli_def_command_w_template.toml"
+    return str(data_path() / "cli_def_command_w_template.toml")
 
 @fixture
 def subcommand_cli_def_path() -> str:
-    return "tests/data/cli_def_subcommand.toml"
+    return str(data_path() / "cli_def_subcommand.toml")
 
 @fixture
 def subcommand_w_template_cli_def_path() -> str:
-    return "tests/data/cli_def_subcommand_w_template.toml"
+    return str(data_path() / "cli_def_subcommand_w_template.toml")
 
 # def sample_cli_definition_path() -> str:
 #     #return Path.relative_to(Path.cwd(), "resource/test.toml")
@@ -47,7 +56,6 @@ def subcommand_w_template_cli_def_path() -> str:
 # helper method whether key:val entry is in output
 def is_entry_in(key: str, val: Any, output: str) -> Any:
     return re.search(f"{key!r}: {val!r}", output)
-
 
 def test_click_builder_hello_world(hello_world_cli_def_path):
     parser = CliDefParser()

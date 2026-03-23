@@ -13,9 +13,12 @@ from ..models import (
     MultDef,
 )
 
+# --------------------------------------------------------------------------------
+# CliDefParser class
+# --------------------------------------------------------------------------------
 class CliDefParser:
 
-    def parse_from_toml(self, path_to_toml_file: str) -> CliDef|None:
+    def parse_from_toml(self, path_to_toml_file: str) -> CliDef | None:
         mapping = {}
         with open(path_to_toml_file, "rb") as file:
             mapping = tomllib.load(file)
@@ -23,12 +26,14 @@ class CliDefParser:
             return self.parse_from_mapping(mapping)
         return None
 
-    def parse_from_toml_text(self, toml_text: str) -> CliDef|None:
+
+    def parse_from_toml_text(self, toml_text: str) -> CliDef | None:
         mapping = {}
         mapping.update(tomllib.loads(toml_text))
         if "cli" in mapping:
             return self.parse_from_mapping(mapping)
         return None
+
 
     def parse_from_mapping(self, mapping: Mapping[str, Any]) -> CliDef | None:
         cliDef = CliDef()

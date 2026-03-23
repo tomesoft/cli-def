@@ -43,7 +43,7 @@ Try the interactive demo:
 ```bash
 cli-def demo beginner
 ```
-
+`beginner` profile reads in [beginner.toml](./src/cli_def/resources/demo/beginner.toml)
 ```
 Type 'help' to list commands, 'exit' to exit
 
@@ -56,6 +56,7 @@ Advanced demo:
 ```bash
 cli-def demo advanced
 ```
+`advanced` profile reads in [advanced.toml](./src/cli_def/resources/demo/advanced.toml)
 
 ---
 
@@ -103,11 +104,11 @@ module:function
 ### Define CLI (TOML)
 
 ```toml
-[cli]
+[cli] # is fixed root entry
 key = "MyCLI"
 help = "HELP of my CLI"
 
-[cli.hello]
+[cli.hello] # defines "hello" command
 args = [
     {key="name", mult="1", type="str"}
 ]

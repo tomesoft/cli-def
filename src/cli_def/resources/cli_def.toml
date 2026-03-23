@@ -9,25 +9,25 @@
 "args"= [
     {"key"="cli_def_file", "option"="--file", "mult"="?", "type"="str"}
 ]
-"entrypoint"="cli_def.script.main:run_repl"
+#"entrypoint"="cli_def.script.handlers:run_repl" # use decorator binding instead
 
 [cli.demo]
 "help"= "Demo"
 "args"= [
     {"key"="profile", "mult"="?", "type"="str"}
 ]
-"entrypoint"="cli_def.script.main:run_demo"
+#"entrypoint"="cli_def.script.handlers:run_demo" # use decorator binding instead
 
 [cli.run]
 "help"= "Run"
 "args"= [
     {"key"="cli_def_file", "mult"="?", "type"="str"}
 ]
-"entrypoint"="cli_def.script.main:run_run"
+"entrypoint"="cli_def.script.handlers:run_run"
 
 [cli.dump]
 "help"= "Dump cli-def AST"
 "args"= [
     {"key"="cli_def_file", "mult"="?", "type"="str"}
 ]
-"entrypoint"="cli_def.script.main:run_dump"
+"entrypoint"="cli_def.script.handlers:run_dump"

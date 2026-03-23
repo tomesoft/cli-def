@@ -8,11 +8,22 @@ from ..argparse import ArgparseBuilder
 from .dispatcher import Dispatcher
 
 
+# --------------------------------------------------------------------------------
+# CliSession class
+# --------------------------------------------------------------------------------
 class CliSession:
-    def __init__(self, cli_def: CliDef, fallback_handler :Callable=None, profile: str=None):
+
+    def __init__(
+            self,
+            cli_def: CliDef,
+            fallback_handler :Callable=None,
+            profile: str=None,
+            cli_def_file: str=None,
+            ):
         self.cli_def = cli_def
         self.fallback_handler = fallback_handler
         self.profile = profile
+        self._cli_def_file = cli_def_file
 
         self._build_runtime()
 
@@ -26,22 +37,29 @@ class CliSession:
         )
         self.dispatcher = Dispatcher(self.cli_def, self.fallback_handler)
 
-    def _make_prog_name(self):
+    def _make_prog_name(self) -> str:
         if self.profile:
             return f"{self.cli_def.key}[{self.profile}]"
         return self.cli_def.key
 
     # --- public API ------------------------------------------------
 
-    def reload_from_text(self, toml_text: str):
+    def reload_from_text(self, toml_text: str) -> bool:
         parser = CliDefParser()
         self.cli_def = parser.parse_from_toml_text(toml_text)
         self._build_runtime()
+        return True
 
-    def reload_from_file(self, path: str):
+    def reload_from_file(self, path: str=None) -> bool:
+        path = path or self._cli_def_file
+        if path is None:
+            return False
         parser = CliDefParser()
         self.cli_def = parser.parse_from_toml(path)
         self._build_runtime()
+        if path != self._cli_def_file:
+            self._cli_def_file = path
+        return True
 
     # --- execution -------------------------------------------------
 
@@ -92,15 +110,14 @@ class CliSession:
             return True
 
         if line == "reload":
-            # 直近の定義を再構築（必要なら拡張）
-            self._build_runtime()
-            print("[reloaded]")
+            if self.reload_from_file():
+                print("[reloaded]")
             return True
 
         if line.startswith("load "):
             path = line.split(" ", 1)[1]
-            self.reload_from_file(path)
-            print(f"[loaded] {path}")
+            if self.reload_from_file(path):
+                print(f"[loaded] {path}")
             return True
 
         return False

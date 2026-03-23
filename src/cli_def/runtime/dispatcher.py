@@ -1,6 +1,8 @@
 # cli_def/runtime/dispatcher.py
 from typing import Callable, Mapping, Any, Sequence
 import importlib
+import argparse
+import logging
 
 from .event import CliEvent
 from ..models import (
@@ -10,16 +12,21 @@ from ..models import (
     MultDef,
 )
 
+from .handlers import get_registered_handler
+
+# --------------------------------------------------------------------------------
+# Dispatcher class
+# --------------------------------------------------------------------------------
 class Dispatcher:
 
-    def __init__(self, cli_def: CliDef, fallback_handler: Callable = None):
-        self.cli_def = cli_def
-        self.fallback_handler = fallback_handler or type(self).default_fallback_handler
+    def __init__(self, cli_def: CliDef, fallback_handler: Callable[[CliEvent], Any] = None):
+        self.cli_def : CliDef = cli_def
+        self.fallback_handler : Callable[[CliEvent], Any] = fallback_handler or type(self)._default_fallback_handler
         self._handler_cache: dict[str, Callable] = {}
         self._pre_load_entrypoints()
 
     @staticmethod
-    def default_fallback_handler(event):
+    def _default_fallback_handler(event: CliEvent):
         print("[fallback handler]")
         print("  PATH:", event.path)
         print("  PARAMS:", event.params)
@@ -34,16 +41,16 @@ class Dispatcher:
         )
         entrypoints = {node.entrypoint for node in executables}
         for entrypoint in entrypoints:
-            self._resolve_handler(entrypoint)
+            self._resolve_handler_entrypoint(entrypoint)
 
 
-    def dispatch(self, args, extra_args: Sequence[str] = None) -> Any: # args: argparse.Namespace
+    def dispatch(self, args: argparse.Namespace, extra_args: Sequence[str] = None) -> Any: # args: argparse.Namespace
         event = self._build_event(args, extra_args=extra_args)
-        handler = self._resolve_handler(event.command.entrypoint) or self.fallback_handler
+        handler = self._resolve_handler(event.command) or self.fallback_handler
         return handler(event)
 
 
-    def _build_event(self, args, extra_args: Sequence[str] = None):
+    def _build_event(self, args: argparse.Namespace, extra_args: Sequence[str] = None):
         command = getattr(args, "_command", None)
         path = getattr(args, "_path", None)
 
@@ -84,7 +91,7 @@ class Dispatcher:
 
             mult: MultDef = arg.mult
 
-            # 👇 ここが本質
+            # unbox if mult definition is (1,1)
             if mult.is_fixed and mult.lower == 1:
                 if isinstance(v, list):
                     result[k] = v[0] if v else None
@@ -95,8 +102,22 @@ class Dispatcher:
 
         return result
 
+    def _resolve_handler(self, command: CommandDef):
+        path = command.defpath  # "MyCLI/command1"
 
-    def _resolve_handler(self, handler_str: str):
+        handler = get_registered_handler(path)
+        if handler:
+            logging.debug(f"handler found in registry: {path}")
+            return handler
+
+        if command.entrypoint:
+            return self._resolve_handler_entrypoint(command.entrypoint)
+
+        logging.debug(f"handler NOT found {path} -> fallback")
+        return self.fallback_handler
+
+
+    def _resolve_handler_entrypoint(self, handler_str: str) -> Callable | None:
         if handler_str is None:
             return None
 

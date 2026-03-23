@@ -3,6 +3,9 @@ from dataclasses import dataclass
 from typing import Any, Optional, Sequence
 from ..models.command_def import CommandDef
 
+# --------------------------------------------------------------------------------
+# CliEvent class
+# --------------------------------------------------------------------------------
 @dataclass
 class CliEvent:
     path: list[str]

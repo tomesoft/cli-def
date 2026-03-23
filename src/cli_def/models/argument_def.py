@@ -8,6 +8,10 @@ from .mult_def import MultDef
 
 
 
+# --------------------------------------------------------------------------------
+# ArgumentDef
+# a concrete class for argument/option definition
+# --------------------------------------------------------------------------------
 @dataclass
 class ArgumentDef(CliDefNode):
     dest: str = None
