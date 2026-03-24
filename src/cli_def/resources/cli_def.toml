@@ -31,3 +31,10 @@
     {"key"="cli_def_file", "mult"="?", "type"="str"}
 ]
 "entrypoint"="cli_def.script.handlers:run_dump"
+
+[cli.scan]
+"help"= "Scan late-binding handlers"
+"args"= [
+    {"key"="package", "mult"="?", "type"="str"},
+    {"key"="show_all", "option"="--all", "is_flag"=true, "default"=false}
+]

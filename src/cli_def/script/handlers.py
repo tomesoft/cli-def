@@ -15,6 +15,9 @@ from ..runtime import cli_def_handler
 from ..runtime.utils import (
     execute_cli,
 )
+from ..runtime.handlers import (
+    scan_handlers,
+)
 
 CLI_DEF_TOML_TEXT="""
 title = "CLI definition"
@@ -135,3 +138,33 @@ def run_dump(event: CliEvent):
         print(f"Error invalid cli-def file: {toml_file}")
         return
     dump_cli_def(cli_def)
+
+
+@cli_def_handler("/cli-def/scan")
+def run_scan(event: CliEvent):
+    print("=== scan command ===")
+    package_name = event.params.get("package") or __package__
+    show_all = event.params.get("show_all")
+    print(f"package_name: {package_name}")
+    catalog = scan_handlers(package_name)
+    if len(catalog) == 0:
+        print("handlers not found")
+        return
+
+    for key, lst in catalog.items():
+        print(f"{key}:")
+        indent = "    "
+        for meta in lst:
+            if not show_all and not meta.late_bindings:
+                continue
+            print(indent + f"{meta.entrypoint}, desc={meta.description!r}, late_bindings={meta.late_bindings}, ")
+
+
+
+@cli_def_handler("/cli-def/test1", late_bindings=True, description="late binding test1")
+def dummy1(event: CliEvent):
+    pass
+
+@cli_def_handler("/cli-def/test2", late_bindings=True, description="late binding test2", tags=["demo"])
+def dummy2(event: CliEvent):
+    pass
