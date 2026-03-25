@@ -1,13 +1,19 @@
 # cli_def/resource/cli_def.toml
 
 [cli]
-"key"="cli-def"
-"help"="CliDef Script"
+key="cli-def"
+help="CliDef Script"
+
+[cli._early] # for early parsing
+args= [
+    {key="verbose", option="--verbose", aliases=["-v"], is_flag=true, "default"=false},
+    {key="debug", option="--debug", aliases=["-d"], is_flag=true, "default"=false},
+]
 
 [cli.repl]
-"help"= "Interactive Mode"
-"args"= [
-    {"key"="cli_def_file", "option"="--file", "mult"="?", "type"="str"}
+help= "Interactive Mode"
+args= [
+    {key="cli_def_file", option="--file", mult="?", type="str"}
 ]
 #"entrypoint"="cli_def.script.handlers:run_repl" # use decorator binding instead
 
@@ -36,5 +42,6 @@
 "help"= "Scan late-binding handlers"
 "args"= [
     {"key"="package", "mult"="?", "type"="str"},
-    {"key"="show_all", "option"="--all", "is_flag"=true, "default"=false}
+    {"key"="show_all", "option"="--all", "is_flag"=true, "default"=false},
+    {"key"="check_toml_path", "option"="--check", "mult"="?", "type"="str"},
 ]

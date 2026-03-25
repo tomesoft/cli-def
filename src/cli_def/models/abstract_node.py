@@ -1,5 +1,5 @@
 # cli_def/models/cli_def_node.py
-from typing import Optional, Any, Iterator, Mapping, Callable, Iterable
+from typing import Optional, Any, Iterator, Mapping, Callable, Iterable, Sequence
 from dataclasses import dataclass, field
 import re
 
@@ -57,13 +57,31 @@ class CliDefNode:
                 selected.append(node)
         return selected
 
+    def to_short_cls(self, type) -> str:
+        if type.__name__ == "CommandDef":
+            return "cmd"
+        if type.__name__ == "ArgumentDef":
+            return "arg"
+        if type.__name__ == "CliDef":
+            return "cli"
+        return "unk"
 
-    def dump_tree(self) -> Iterable[str]:
-        lines = []
+    def dump_tree(self, *, details:bool=False) -> Sequence[Sequence[str]]:
+        col_keys = ("key", "cls", "option", "is_flag", "help")
+        rows = []
+        rows.append(col_keys)
         for node in self.iter_all_nodes():
-            line = "  " * node.deflevel + node.key
-            lines.append(line)
-        return lines
+            cells = []
+            for col in col_keys:
+                if col == "key":
+                    cell = "  " * node.deflevel + node.key
+                elif col == "cls":
+                    cell = self.to_short_cls(type(node))
+                else:
+                    cell = getattr(node, col, None)
+                cells.append(cell)
+            rows.append(cells)
+        return rows
 
 
 # --------------------------------------------------------------------------------

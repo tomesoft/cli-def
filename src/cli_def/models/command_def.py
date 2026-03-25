@@ -14,6 +14,9 @@ from .argument_def import ArgumentDef
 # --------------------------------------------------------------------------------
 @dataclass
 class CommandDef(ExecutableNode):
+    # reserved keys
+    EARLY = "_early"
+    # fields
     is_template: bool = False
     help: Optional[str] = None
     aliases: Optional[list[str]] = None

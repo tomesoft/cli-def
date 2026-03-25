@@ -36,6 +36,19 @@ class ArgparseBuilder:
     def defpath_mapping(self) -> Mapping[str, ArgparseNode]:
         return self._defpath_mapping
 
+
+    def build_early_argparse(self, cliDef: CliDef, prog: str = None) -> argparse.ArgumentParser:
+        early_node: CommandDef = cliDef.select_first(lambda n: n.key == CommandDef.EARLY)
+        if early_node is None:
+            return None
+
+        parser = argparse.ArgumentParser(
+            prog=prog or cliDef.key
+        )
+        self.build_arguments(early_node.arguments, parser)
+        return parser
+
+
     def build_argparse(self, cliDef: CliDef, prog: str = None) -> argparse.ArgumentParser:
         parser = argparse.ArgumentParser(
             prog=prog or cliDef.key
@@ -114,7 +127,7 @@ class ArgparseBuilder:
         # build parent parsers from of template
         parent_parsers_map = {}
         for cmdDef in commandDefs:
-            if not cmdDef.is_template:
+            if not cmdDef.is_template or cmdDef.key == CommandDef.EARLY:
                 continue
             cmd_templ_parser = self.build_single_command(cmdDef)
             parent_parsers_map[cmdDef.key] = cmd_templ_parser
@@ -128,7 +141,7 @@ class ArgparseBuilder:
         self._register_subparsers(firstCmdDef.parent, subparsers)
         cmd_parsers = []
         for cmdDef in commandDefs:
-            if cmdDef.is_template:
+            if cmdDef.is_template or cmdDef.key == CommandDef.EARLY:
                 continue
             # select parent_parsers
             parent_parsers = []
