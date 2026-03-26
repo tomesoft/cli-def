@@ -34,6 +34,12 @@ class ArgumentDef(CliDefNode):
         elif not isinstance(self.mult, MultDef):
             raise TypeError(f"Invalid mult type: {type(self.mult)}")
 
+        if self.is_flag:
+            if self.default is None:
+                self.default = False
+            if self.type is None:
+                self.type = "bool"
+
     @property
     def is_positional(self) -> bool:
         return self.option is None

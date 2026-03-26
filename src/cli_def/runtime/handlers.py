@@ -1,6 +1,6 @@
 # cli_def/runtime/handlers.py
 
-from typing import Callable, Dict, List, Iterable, Optional
+from typing import Callable, Dict, List, Iterable, Optional, Any
 from dataclasses import dataclass
 import pkgutil
 import importlib
@@ -20,6 +20,17 @@ class HandlerMeta:
     @property
     def entrypoint(self) -> str:
         return f"{self.module}:{self.name}"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "path": self.path,
+            "module": self.module,
+            "name": self.name,
+            "tags": list(self.tags) if self.tags else [],
+            "description": self.description,
+            "late_bindings": self.late_bindings,
+            "entrypoint": self.entrypoint,
+        }
 
 
 def cli_def_handler(
@@ -55,13 +66,28 @@ def clear_registry():
 def get_all_handlers_catalog() -> Dict[str, List[HandlerMeta]]:
     return _ALL_HANDLERS_CATALOG
 
+def clear_all_handlers_catalog():
+    _ALL_HANDLERS_CATALOG.clear()
 
-def scan_handlers(package_path: str):
-    module = importlib.import_module(package_path)
-    import_all_modules(module)
+
+def scan_handlers(package_path: str, recursive: bool=False):
+    #pkg = importlib.import_module(package_path)
+    import_modules(package_path, recursive=recursive)
     return get_all_handlers_catalog()
 
 
-def import_all_modules(package):
-    for _, name, _ in pkgutil.walk_packages([package.__name__], package.__name__ + "."):
-        importlib.import_module(name)
+# def import_all_modules(package):
+#     for _, name, _ in pkgutil.walk_packages([package.__name__], package.__name__ + "."):
+#         importlib.import_module(name)
+
+def import_modules(package, recursive: bool):
+    pkg = importlib.import_module(package)
+
+    if not recursive:
+        # 直下だけ
+        for _, name, ispkg in pkgutil.iter_modules(pkg.__path__):
+            importlib.import_module(f"{package}.{name}")
+    else:
+        # 再帰
+        for _, name, _ in pkgutil.walk_packages(pkg.__path__, package + "."):
+            importlib.import_module(name)

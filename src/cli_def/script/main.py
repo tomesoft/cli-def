@@ -26,7 +26,7 @@ from ..runtime.utils import (
 import cli_def.script.handlers
 from .handlers import (
     load_builtin_cli_def,
-    dump_cli_def,
+    dump_cli_def_pretty,
     print_handler
 )
 
@@ -51,7 +51,7 @@ def main(argv: Sequence[str]=None):
         logging.debug(f"remaining:{remaining}")
 
     if get_logging_level() <= logging.INFO:
-        dump_cli_def(cli_def)
+        dump_cli_def_pretty(cli_def)
 
     execute_cli(cli_def, builder=builder, argv=remaining, fallback_handler=print_handler)
 

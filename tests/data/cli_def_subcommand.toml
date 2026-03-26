@@ -3,36 +3,36 @@
 title = "CLI definition"
 
 [cli] # cli[.<command>[.<subcommand>]]
-"key"="MyCLI"
-"help"="HELP"
+key = "MyCLI"
+help = "HELP"
 
 [cli.command1]
-"help"="HELP of command1"
-#"group"="subcommand"
+help = "HELP of command1"
+#group = "subcommand"
 
 [cli.command1.subcommand1_1]
-"help"="HELP of subcommand1_1"
+help = "HELP of subcommand1_1"
 
 [cli.command1.subcommand1_2]
-"help"="HELP of subcommand1_2"
-"args"= [
-    {"key"="positional_param1", "mult"="1", "type"="str", "spec_type"="path"},
-    {"key"="optional_option", "option"="--option", "mult"="?", "type"="str"},
-    {"key"="flag_option", "is_flag"=true, "option"="--flag", "default"=false},
-    {"key"="choice_option", "option"="--choice", default="a", "choices"=["a", "b", "c"], "mult"="?", "type"="str"},
+help = "HELP of subcommand1_2"
+args =  [
+    {key = "positional_param1", mult = "1", type = "str", spec_type = "path"},
+    {key = "optional_option", option = "--option", mult = "?", type = "str"},
+    {key = "flag_option", is_flag = true, option = "--flag", default = false},
+    {key = "choice_option", option = "--choice", default="a", choices = ["a", "b", "c"], mult = "?", type = "str"},
 ]
 
 
 [cli.command2]
-"help"="HELP of command2"
-"group"="subcommand"
+help = "HELP of command2"
+group = "subcommand"
 
 [cli.command2.subcommand2_1]
-"help"="HELP of subcommand2_1"
+help = "HELP of subcommand2_1"
 
 [cli.command2.subcommand2_2]
-"help"="HELP of subcommand2_2"
+help = "HELP of subcommand2_2"
 
 
 [cli.command3]
-"help"="HELP of command3"
+help = "HELP of command3"

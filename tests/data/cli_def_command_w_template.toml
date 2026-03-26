@@ -3,33 +3,33 @@
 title = "CLI definition"
 
 [cli] # cli[.<command>[.<subcommand>]]
-"key"="MyCLI"
-"help"="HELP"
-"group"="command"
+key = "MyCLI"
+help = "HELP"
+group = "command"
 
 [cli._command_templ_1] # startswith "_" means command template
-"args"= [ # common args for the same layer commands
-    {"key"="positional_param1", "mult"="1", "type"="str", "spec_type"="path"},
-    {"key"="optional_option", "option"="--option", "mult"="?", "type"="str"},
+args =  [ # common args for the same layer commands
+    {key = "positional_param1", mult = "1", type = "str", spec_type = "path"},
+    {key = "optional_option", option = "--option", mult = "?", type = "str"},
 ]
 [cli._command_templ_2] # startswith "_" means command template
-"args"= [ # common args for the same layer commands
-    {"key"="flag_option", "option"="--flag", "is_flag"=true,  "default"=false},
-    {"key"="choice_option", "option"="--choice", default="a", "choices"=["a", "b", "c"], "mult"="?", "type"="str"},
+args =  [ # common args for the same layer commands
+    {key = "flag_option", option = "--flag", is_flag = true,  default = false},
+    {key = "choice_option", option = "--choice", default="a", choices = ["a", "b", "c"], mult = "?", type = "str"},
 ]
 
 [cli.command1]
-"help"="HELP of command1"
+help = "HELP of command1"
 # command1 inherits arguments from "_command_templ_1" and "_command_templ_2" implicitly
 
 [cli.command2]
-"help"="HELP of command2"
-"inherit_from"=["_command_templ_1", "_command_templ_2"] # command2 inherits arguments from "_command_tmpl_1" and "_command_tmpl_2" explicitly
+help = "HELP of command2"
+inherit_from = ["_command_templ_1", "_command_templ_2"] # command2 inherits arguments from "_command_tmpl_1" and "_command_tmpl_2" explicitly
 
 [cli.command3]
-"help"="HELP of command3"
-"inherit_from"=["_command_templ_2"] # command3 inherits arguments from "_command_tmpl_2" only
+help = "HELP of command3"
+inherit_from = ["_command_templ_2"] # command3 inherits arguments from "_command_tmpl_2" only
 
 [cli.command4]
-"help"="HELP of command4"
-"inherit_from"=[] # command4 defys inheritance
+help = "HELP of command4"
+inherit_from = [] # command4 defys inheritance

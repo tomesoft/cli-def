@@ -57,6 +57,7 @@ class CliDefNode:
                 selected.append(node)
         return selected
 
+
     def to_short_cls(self, type) -> str:
         if type.__name__ == "CommandDef":
             return "cmd"
@@ -66,8 +67,9 @@ class CliDefNode:
             return "cli"
         return "unk"
 
+
     def dump_tree(self, *, details:bool=False) -> Sequence[Sequence[str]]:
-        col_keys = ("key", "cls", "option", "is_flag", "help")
+        col_keys = ("key", "cls", "option", "mult", "type", "is_flag", "default", "choices", "help")
         rows = []
         rows.append(col_keys)
         for node in self.iter_all_nodes():
@@ -77,6 +79,9 @@ class CliDefNode:
                     cell = "  " * node.deflevel + node.key
                 elif col == "cls":
                     cell = self.to_short_cls(type(node))
+                elif col == "mult":
+                    mult = getattr(node, "mult", None)
+                    cell = mult.to_str() if mult else None
                 else:
                     cell = getattr(node, col, None)
                 cells.append(cell)

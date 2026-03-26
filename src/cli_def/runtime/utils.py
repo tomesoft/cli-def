@@ -10,6 +10,7 @@ from .dispatcher import Dispatcher
 from .event import CliEvent
 from .context import CliRuntimeContext
 
+
 def make_runtime_context(args: argparse.Namespace) -> CliRuntimeContext:
     ctx = CliRuntimeContext(
         debug=bool(getattr(args, "debug", False)),
@@ -28,9 +29,11 @@ def setup_logging(ctx: CliRuntimeContext):
     if level < logging.WARNING:
         logging.info(f"level={get_logging_level_name()}")
 
+
 def get_logging_level() -> int:
     logger = logging.getLogger()
     return logger.level
+
 
 def get_logging_level_name() -> str:
     level = get_logging_level()
@@ -41,9 +44,6 @@ def get_logging_level_name() -> str:
     return "UNKNOWN_LEVEL"
 
 
-# def build_parser(cli_def: CliDef) -> argparse.ArgumentParser:
-#     builder = ArgparseBuilder()
-#     return builder.build_argparse(cli_def)
 
 def execute_cli(
         cli_def: CliDef,

@@ -3,5 +3,5 @@
 title = "CLI definition"
 
 [cli] # cli[.<command>[.<subcommand>]]
-"key"="MyCLI"
-"help"="HELP"
+key = "MyCLI"
+help = "HELP"

@@ -12,6 +12,7 @@ from .dispatcher import Dispatcher
 # CliSession class
 # --------------------------------------------------------------------------------
 class CliSession:
+    _DEFAULT_PROMPT="cli-def> "
 
     def __init__(
             self,
@@ -70,7 +71,8 @@ class CliSession:
 
     # --- REPL ------------------------------------------------------
 
-    def repl(self, prompt: str = "cli-def> "):
+    def repl(self, prompt: str = None):
+        prompt = prompt or self.cli_def.prompt or self._DEFAULT_PROMPT
         while True:
             try:
                 line = input(prompt).strip()

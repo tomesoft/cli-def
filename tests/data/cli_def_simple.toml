@@ -3,11 +3,12 @@
 title = "CLI definition"
 
 [cli] # cli[.<command>[.<subcommand>]]
-"key"="MyCLI"
-"help"="HELP"
-"args"= [
-    {"key"="positional_param1", "mult"="1", "type"="str", "spec_type"="path"},
-    {"key"="optional_option", "option"="--option", "mult"="?", "type"="str"},
-    {"key"="flag_option", "option"="--flag", "is_flag"=true, "type"="bool", "default"=false},
-    {"key"="choice_option", "option"="--choice", default="a", "choices"=["a", "b", "c"], "mult"="?", "type"="str"},
+key = "MyCLI"
+help = "HELP"
+prompt = "simple>> "
+args = [
+    {key="positional_param1", mult="1", type="str", spec_type="path"},
+    {key="optional_option", option="--option", mult="?", type="str"},
+    {key="flag_option", option="--flag", is_flag=true, type="bool", default=false},
+    {key="choice_option", option="--choice", default="a", choices=["a", "b", "c"], mult="?", type="str"},
 ]

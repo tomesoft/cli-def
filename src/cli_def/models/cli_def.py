@@ -18,6 +18,7 @@ class CliDef(ExecutableNode):
     arguments: list[ArgumentDef] = field(default_factory=list)
     commands: Optional[list["CommandDef"]] = None
     group: Optional[str] = None
+    prompt: Optional[str] = None # prompt on interactive/repl mode
 
     def iter_children(self):
         yield from self.arguments or []
