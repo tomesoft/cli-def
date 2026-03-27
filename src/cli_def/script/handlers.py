@@ -28,6 +28,7 @@ from ..runtime.utils import (
 from ..runtime.handlers import (
     scan_handlers,
     clear_all_handlers_catalog,
+    can_import,
 )
 
 
@@ -128,6 +129,9 @@ def run_scan(event: CliEvent):
     recursive = event.params.get("recursive")
     print(f"package_name: {package_name}")
 
+    if not can_import(package_name):
+        print(f"[ERROR] Cannot find package: {package_name}")
+        return 1
 
     result = subprocess.run([
         sys.executable,

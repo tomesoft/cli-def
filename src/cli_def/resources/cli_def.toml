@@ -8,6 +8,12 @@ help = "CliDef Script"
 args = [
     {key="verbose", option="--verbose", aliases=["-v"], is_flag=true, default=false},
     {key="debug", option="--debug", aliases=["-d"], is_flag=true, default=false},
+    {key="backend", option="--backend", type="str", choices=["argparse", "click"], default="argparse", help="Choose backend"},
+]
+
+[cli._shared]
+args = [
+    {key="verify", option="--verify", is_flag=true, default=false},
 ]
 
 [cli.repl]
@@ -43,6 +49,6 @@ help = "Scan late-binding handlers"
 args = [
     {key="package", mult="?", type="str"},
     {key="show_all", option="--all", is_flag=true, default=false},
-    {key="recursive", option="--recursive", is_flag=true, default=false},
+    {key="recursive", option="--recursive", aliases=["-R"], is_flag=true, default=false},
     {key="check_toml_path", option="--check", mult="?", type="str"},
 ]

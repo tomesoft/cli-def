@@ -56,20 +56,21 @@ class MultDef:
         raise ValueError(f"Invalid mult spec: {text}")
 
             
-    def to_str(self) -> str:
-        if self.is_fixed:
-            return str(self.lower)
-
-        if self.is_optional:
-            return "?"
-
-        if self.is_unbounded:
-            if self.lower == 0:
-                return "*"
-            elif self.lower == 1:
-                return "+"
-
+    def to_str(self, *, span: bool=False) -> str:
         lower_str = str(self.lower)
+        if not span:
+            if self.is_fixed:
+                return lower_str
+
+            if self.is_optional:
+                return "?"
+
+            if self.is_unbounded:
+                if self.lower == 0:
+                    return "*"
+                elif self.lower == 1:
+                    return "+"
+
         upper_str = "*" if self.upper is None else str(self.upper)
         
         return f"{lower_str}..{upper_str}"

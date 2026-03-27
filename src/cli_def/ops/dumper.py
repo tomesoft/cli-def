@@ -1,7 +1,7 @@
 # cli_def/ops/dumper.py
 from typing import Sequence, Any
 
-from ..models import CliDef
+from ..models import CliDef, CliDefNode, MultDef
 
 
 
@@ -19,10 +19,53 @@ def to_display_text(val: Any, none_expr: str = None) -> str:
     return str(val)
 
 
+def _to_short_cls(type) -> str:
+    if type.__name__ == "CommandDef":
+        return "cmd"
+    if type.__name__ == "ArgumentDef":
+        return "arg"
+    if type.__name__ == "CliDef":
+        return "cli"
+    return "unk"
+
+def _dump_tree(cli_def_node: CliDefNode, *, details:bool=False) -> Sequence[Sequence[str]]:
+    col_keys = ("key", "cls", "option", "mult", "type",  "default", "choices", "help", "entrypoint")
+    rows = []
+    rows.append(col_keys)
+    for node in cli_def_node.iter_all_nodes():
+        cells = []
+        for col in col_keys:
+            if col == "key":
+                cell = "  " * node.deflevel + node.key
+            elif col == "cls":
+                cell = _to_short_cls(type(node))
+            elif col == "mult":
+                mult: MultDef = getattr(node, "mult", None)
+                cell = mult.to_str() if mult else None
+            elif col == "option":
+                if opt := getattr(node, "option", None):
+                    if aliases := getattr(node, "aliases", []):
+                        cell = f"{opt} ({','.join(aliases)})"
+                    else:
+                        cell = opt
+                else:
+                    cell = None
+            elif col == "type":
+                if is_flag := getattr(node, "is_flag", None):
+                    cell = "flag"
+                else:
+                    cell = getattr(node, "type", None)
+            else:
+                cell = getattr(node, col, None)
+            cells.append(cell)
+        rows.append(cells)
+    return rows
+
 
 def dump_cli_def_pretty(cli_def: CliDef, details: bool=False):
     col_widths = None
-    row_values = cli_def.dump_tree(details=True)
+    row_values = _dump_tree(cli_def, details=True)
+    #row_values = cli_def.dump_tree()
     # header_row = row_values[0]
     # data_rows = row_values[1:]
     rows = []

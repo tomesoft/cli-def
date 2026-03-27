@@ -27,7 +27,7 @@ class Dispatcher:
 
     @staticmethod
     def _default_fallback_handler(event: CliEvent):
-        print("[fallback handler]")
+        print("[fallback handler of Dispatcher]")
         print("  PATH:", event.path)
         print("  PARAMS:", event.params)
         if event.extra_args:
@@ -46,6 +46,24 @@ class Dispatcher:
 
     def dispatch(self, args: argparse.Namespace, extra_args: Sequence[str] = None) -> Any: # args: argparse.Namespace
         event = self._build_event(args, extra_args=extra_args)
+        handler = self._resolve_handler(event.command) or self.fallback_handler
+        return handler(event)
+
+
+    # called via click binder
+    def _dispatch(self, defpath: str, kwargs: dict[str, Any]) -> Any:
+        logging.debug(f"@@@ Dispatcher._dispatcher called {defpath}")
+        command = self.cli_def.find(defpath)
+        if command is None:
+            raise RuntimeError(f"Command not found from defpath: [{defpath}]")
+        params = self._normalize(command, dict(kwargs))
+        event = CliEvent(
+            path=defpath,
+            command=command,
+            params=params,
+            event_source=self,
+            extra_args=None, # TODO
+        )
         handler = self._resolve_handler(event.command) or self.fallback_handler
         return handler(event)
 

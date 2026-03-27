@@ -1,11 +1,11 @@
-# cli_def/click_builder.py
+# cli_def/click/click_builder.py
 try:
     import click
 except ImportError:
     raise ImportError(
         "click is required for click builder. Install with `cli-def[click]`"
     )
-from typing import Any, Mapping
+from typing import Any, Mapping, Iterable
 
 from ..models import (
     CliDefNode,
@@ -103,6 +103,7 @@ class ClickBuilder:
             help=cmdDef.help,
             params=params,
             callback=callback,
+            hidden=cmdDef.is_template
         )
 
         self._register(cmdDef, cmd)
@@ -135,7 +136,7 @@ class ClickBuilder:
         return param
 
 
-    def _attach_commands(self, parent, commands):
+    def _attach_commands(self, parent, commands: Iterable[CommandDef]):
         for cmd in commands or []:
             parent.add_command(self._build_command(cmd))
 

@@ -4,6 +4,7 @@ from typing import Callable, Dict, List, Iterable, Optional, Any
 from dataclasses import dataclass
 import pkgutil
 import importlib
+import importlib.util
 
 _EARLY_BINDING_HANDLER_REGISTRY: Dict[str, Callable] = {}
 _ALL_HANDLERS_CATALOG: Dict[str, List[HandlerMeta]] = {}
@@ -91,3 +92,8 @@ def import_modules(package, recursive: bool):
         # 再帰
         for _, name, _ in pkgutil.walk_packages(pkg.__path__, package + "."):
             importlib.import_module(name)
+
+
+def can_import(module_name: str) -> bool:
+    spec = importlib.util.find_spec(module_name)
+    return spec is not None

@@ -78,36 +78,36 @@ class ArgparseBuilder:
                 # positional paremter
                 action = parser.add_argument(
                     argDef.key,
-                    # dest=argDef.get_dest(),
                     choices=argDef.choices,
                     default=argDef.default,
-                    #nargs=argDef.mult,
                     nargs=self.to_nargs(argDef.mult),
                     help=argDef.help,
-                    #action=argDef.get_action(),
-                    #action=None,
                 )
             elif argDef.is_flag:
+                name_or_flags = []
+                if argDef.aliases:
+                    name_or_flags.extend(argDef.aliases)
+                name_or_flags.append(argDef.option or argDef.key)
                 action = parser.add_argument(
-                    argDef.option or argDef.key,
+                    #argDef.option or argDef.key,
+                    *name_or_flags,
                     dest=argDef.get_dest(),
-                    #nargs=argDef.mult,
-                    #nargs=argDef.to_nargs(),
                     help=argDef.help,
                     action=argDef.get_action(),
-                    #action=None,
                 )
             else: # option parameter
+                name_or_flags = []
+                if argDef.aliases:
+                    name_or_flags.extend(argDef.aliases)
+                name_or_flags.append(argDef.option)
                 action = parser.add_argument(
-                    argDef.option,
+                    #argDef.option,
+                    *name_or_flags,
                     dest=argDef.get_dest(),
                     choices=argDef.choices,
                     default=argDef.default,
-                    #nargs=argDef.mult,
                     nargs=self.to_nargs(argDef.mult),
                     help=argDef.help,
-                    #action=argDef.get_action(),
-                    #action=None,
                 )
 
             actions.append(action)
@@ -198,6 +198,8 @@ class ArgparseBuilder:
             return None
 
         if mult.is_fixed: # lower == upper
+            if mult.lower == 1:
+                return None # to fix problem list ['param'] passing
             return mult.lower
 
         if mult.is_optional:
