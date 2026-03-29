@@ -8,10 +8,10 @@ from cli_def import (
     CliDefParser,
     CliDef,
 )
-from cli_def.argparse import ArgparseBuilder
+from cli_def.backend.argparse import ArgparseBuilder
 
 def data_path() -> Path:
-    return Path(__file__).parent.parent / "data"
+    return Path(__file__).parent.parent.parent / "data"
 
 @fixture
 def minimum_cli_def_path() -> str:

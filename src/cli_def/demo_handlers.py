@@ -1,13 +1,20 @@
 # cli_def/demo_handlers.py
 
-from .runtime import CliEvent
+from .runtime import CliEvent, HandlerResult
 
 # --------------------------------------------------------------------------------
 # handlers for beginner profile
 # --------------------------------------------------------------------------------
 def echo(event: CliEvent):
     msg = event.params.get("message", [])
-    print(" ".join(msg))
+    result = " ".join(msg)
+    print(result)
+
+    return HandlerResult.make_result(
+        event,
+        "message",
+        data=result,
+    )
 
 
 def greet(event: CliEvent):
@@ -19,6 +26,12 @@ def greet(event: CliEvent):
 
     print(text)
 
+    return HandlerResult.make_result(
+        event,
+        "greet",
+        data=text,
+    )
+
 
 # --------------------------------------------------------------------------------
 # handlers for advanced profile
@@ -27,18 +40,39 @@ def build(event: CliEvent):
     target = event.params["target"]
     verbose = event.params.get("verbose", False)
 
-    print(f"[build] target={target} verbose={verbose}")
+    text = f"[build] target={target} verbose={verbose}"
+    print(text)
+
+    return HandlerResult.make_result(
+        event,
+        "build",
+        data=text,
+    )
 
 
 def test(event: CliEvent):
     pattern = event.params.get("pattern") or "all"
     verbose = event.params.get("verbose", False)
 
-    print(f"[test] pattern={pattern} verbose={verbose}")
+    text = f"[test] pattern={pattern} verbose={verbose}"
+    print(text)
+
+    return HandlerResult.make_result(
+        event,
+        "test",
+        data=text,
+    )
 
 
 def deploy(event: CliEvent):
     env = event.params.get("env") or "dev"
     force = event.params.get("force", False)
 
-    print(f"[deploy] env={env} force={force}")
+    text = f"[deploy] env={env} force={force}"
+    print(text)
+
+    return HandlerResult.make_result(
+        event,
+        "deploy",
+        data=text,
+    )

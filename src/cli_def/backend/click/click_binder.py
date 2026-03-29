@@ -1,4 +1,6 @@
-# cli_def/click/click_binder.py
+# cli_def/backend/click/click_binder.py
+import logging
+
 try:
     import click
 except ImportError:
@@ -7,14 +9,16 @@ except ImportError:
     )
 from typing import Any, Mapping
 
-from ..runtime import (
-    Dispatcher
+from ...runtime import (
+    CliDispatcher,
+    CliRuntimeContext,
 )
 
 class ClickBinder:
 
-    def __init__(self, dispatcher: Dispatcher):
+    def __init__(self, dispatcher: CliDispatcher, ctx: CliRuntimeContext = None):
         self.dispatcher = dispatcher
+        self.runtime_ctx = ctx
 
     def bind(self, root, mapping: Mapping[str, Any]):
         for defpath, obj in mapping.items():
@@ -26,7 +30,8 @@ class ClickBinder:
                 obj.callback = self._make_callback(defpath)
 
     def _make_callback(self, defpath):
-        def callback(**kwargs):
-            #print(f"@@@ internal callback called: {defpath}")
-            self.dispatcher._dispatch(defpath, kwargs)
+        @click.pass_context
+        def callback(ctx, **kwargs):
+            logging.info(f"@@@ internal callback called: {defpath} passthrough={ctx.args}")
+            return self.dispatcher._dispatch(defpath, kwargs, extra_args=list(ctx.args), ctx=self.runtime_ctx)
         return callback

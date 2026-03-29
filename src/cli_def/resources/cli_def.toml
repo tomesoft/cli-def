@@ -19,7 +19,8 @@ args = [
 [cli.repl]
 help = "Interactive Mode"
 args = [
-    {key="cli_def_file", option="--file", mult="?", type="str"}
+    {key="cli_def_file", option="--file", mult="?", type="str"},
+    {key="no_ctx_propagate", option="--no-ctx-propagate", is_flag=true, default=false},
 ]
 #"entrypoint"="cli_def.script.handlers:run_repl" # use decorator binding instead
 
@@ -33,7 +34,8 @@ args = [
 [cli.run]
 help = "Run"
 args = [
-    {key="cli_def_file", mult="?", type="str"}
+    {key="cli_def_file", mult="?", type="str"},
+    {key="no_ctx_propagate", option="--no-ctx-propagate", is_flag=true, default=false},
 ]
 entrypoint = "cli_def.script.handlers:run_run"
 
@@ -50,5 +52,6 @@ args = [
     {key="package", mult="?", type="str"},
     {key="show_all", option="--all", is_flag=true, default=false},
     {key="recursive", option="--recursive", aliases=["-R"], is_flag=true, default=false},
+    {key="no_subprocess", option="--no-subprocess", aliases=["-N"], is_flag=true, default=false},
     {key="check_toml_path", option="--check", mult="?", type="str"},
 ]

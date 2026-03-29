@@ -6,27 +6,27 @@ import subprocess
 import sys
 import os
 import json
+import copy
 
 from importlib import resources
 
 from ..models import CliDef
 from ..parsers import CliDefParser
-from ..argparse import ArgparseBuilder
 from ..runtime import (
     CliEvent,
-    Dispatcher,
+    CliDispatcher,
     CliSession,
+    CliRunner,
+    HandlerResult,
 )
 from ..ops import (
     load_cli_def_path,
     dump_cli_def_pretty,
 )
-from ..runtime import cli_def_handler
-from ..runtime.utils import (
-    execute_cli,
-)
+from ..runtime import cli_def_handler, HandlerResult
 from ..runtime.handlers import (
     scan_handlers,
+    make_digest_scan_result,
     clear_all_handlers_catalog,
     can_import,
 )
@@ -34,7 +34,6 @@ from ..runtime.handlers import (
 
 def load_builtin_cli_def(*relative_paths):
     path = resources.files("cli_def.resources")
-    #print(f"relative_paths: {relative_paths!r}")
     if len(relative_paths):
         path = path.joinpath(*relative_paths)
     else:
@@ -64,10 +63,10 @@ def print_handler(event: CliEvent):
 # --------------------------------------------------------------------------------
 @cli_def_handler("/cli-def/repl")
 def run_repl(event: CliEvent):
-    print("=== repl command ===")
+    logging.info("=== repl command ===")
     cli_def_file = event.params.get("cli_def_file")
     if cli_def_file is None:
-        print("load builtin cli_def")
+        logging.info("load builtin cli_def")
         cli_def = load_builtin_cli_def()
     else:
         print(f"try to load: {cli_def_file} ")
@@ -75,13 +74,27 @@ def run_repl(event: CliEvent):
     if cli_def is None:
         return
     dump_cli_def_pretty(cli_def)
+    no_ctx_propagate = event.params.get("no_ctx_propagate")
+    if not no_ctx_propagate:
+        child_ctx = copy.deepcopy(event.ctx)
+    else:
+        child_ctx = None
     print("Type 'help' to list commands, 'exit' to exit")
     session = CliSession(
         cli_def,
         fallback_handler=print_handler,
         cli_def_file=cli_def_file,
+        ctx=child_ctx,
     )
     session.repl()
+
+    return HandlerResult.make_result(
+        event,
+        "run_repl",
+        data=session.result_store.all_data()
+    )
+
+
 
 @cli_def_handler("/cli-def/demo")
 def run_demo(event: CliEvent):
@@ -95,8 +108,16 @@ def run_demo(event: CliEvent):
         cli_def,
         fallback_handler=print_handler,
         profile=profile,
+        ctx=event.ctx,
     )
     session.repl(prompt=f"demo[{profile}]> ")
+
+    return HandlerResult.make_result(
+        event,
+        "run_repl",
+        data=session.result_store.all_data()
+    )
+
 
 def run_run(event: CliEvent):
     logging.info("=== run command ===")
@@ -105,12 +126,21 @@ def run_run(event: CliEvent):
     if cli_def is None:
         return
     dump_cli_def_pretty(cli_def)
-    print(f"[run] forwarding args: {event.extra_args}")
-    execute_cli(
+    no_ctx_propagate = event.params.get("no_ctx_propagate")
+    if not no_ctx_propagate:
+        child_ctx = copy.deepcopy(event.ctx)
+    else:
+        child_ctx = None
+    print(f"[run] forwarding args: {event.extra_args}, no_ctx_propagate: {no_ctx_propagate}")
+    runner = CliRunner(
         cli_def,
-        argv=event.extra_args if event.extra_args else [],
-        fallback_handler=print_handler
+        fallback_handler=print_handler,
+        default_ctx=child_ctx,
     )
+    return runner.run(
+        argv=event.extra_args if event.extra_args else [],
+    )
+
 
 def run_dump(event: CliEvent):
     logging.info("=== dump command ===")
@@ -126,34 +156,55 @@ def run_scan(event: CliEvent):
     logging.info("=== scan command ===")
     package_name = event.params.get("package") or __package__
     show_all = event.params.get("show_all")
+    no_subprocess = event.params.get("no_subprocess")
     recursive = event.params.get("recursive")
     print(f"package_name: {package_name}")
 
     if not can_import(package_name):
-        print(f"[ERROR] Cannot find package: {package_name}")
-        return 1
+        print(f"[ERROR] package not found: {package_name}")
+        return HandlerResult.make_error(
+            event.command.defpath,
+            f"[ERROR] package not found: {package_name}"
+        )
 
-    result = subprocess.run([
-        sys.executable,
-        "-m",
-        "cli_def._internal.scan_runner",
-        package_name,
-    ] + (
-        ["--all"] if show_all else []
-    ) + (
-        ["--recursive"] if recursive else []
-    )
-    , capture_output=True,
-    text=True,
-    env=os.environ.copy()
-    )
-    catalog = json.loads(result.stdout)
-    #print(f"result: {catalog}")
-    # catalog = scan_handlers(package_name)
-    if len(catalog) == 0:
+    if no_subprocess:
+        logging.info("[scan without subprocess]")
+        result = scan_handlers(package_name)
+        digest = make_digest_scan_result(result)
+
+    else:
+        logging.info("[scan with subprocess]")
+        proc_result = subprocess.run([
+            sys.executable,
+            "-m",
+            "cli_def._internal.scan_runner",
+            package_name,
+            ] + (
+                ["--all"] if show_all else []
+            ) + (
+                ["--recursive"] if recursive else []
+            )
+            , capture_output=True,
+            text=True,
+            env=os.environ.copy()
+        )
+        logging.debug(f"@@@ result.stdout: {proc_result.stdout}")
+        digest = json.loads(proc_result.stdout)
+
+
+    if digest is None or len(digest["catalog_digest"]) == 0:
         print("handlers not found")
-        return
+        return HandlerResult.make_result(event, "handlers not found", digest)
 
+
+    if event.ctx.verbose:
+        print("=== scan coverage ===")
+        for k, v in digest["scan_coverage"].items():
+            print(f"{k} : {v}")
+        print("=====================")
+
+    catalog = digest["catalog_digest"]
+    #logging.info(f"catalog: {catalog}")
     for key, lst in catalog.items():
         print(f"{key}:")
         indent = "    "
@@ -161,6 +212,8 @@ def run_scan(event: CliEvent):
             # if not show_all and not meta.late_bindings:
             #     continue
             print(indent + f"{meta_digest.get("entrypoint")}, desc={meta_digest.get("description")!r}, late_bindings={meta_digest.get("late_bindings")}")
+
+    return {"catalog": catalog}
 
 
 

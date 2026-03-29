@@ -3,6 +3,7 @@
 [cli]
 key = "demo"
 help = "Beginner demo CLI"
+prompt = "beginner> " # be used when repl mode
 
 [cli.echo]
 help = "Echo message"

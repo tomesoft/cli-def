@@ -13,11 +13,13 @@ from ..models import (
 )
 
 from .handlers import get_registered_handler
+from .context import CliRuntimeContext
+from .result import HandlerResult
 
 # --------------------------------------------------------------------------------
 # Dispatcher class
 # --------------------------------------------------------------------------------
-class Dispatcher:
+class CliDispatcher:
 
     def __init__(self, cli_def: CliDef, fallback_handler: Callable[[CliEvent], Any] = None):
         self.cli_def : CliDef = cli_def
@@ -44,14 +46,26 @@ class Dispatcher:
             self._resolve_handler_entrypoint(entrypoint)
 
 
-    def dispatch(self, args: argparse.Namespace, extra_args: Sequence[str] = None) -> Any: # args: argparse.Namespace
-        event = self._build_event(args, extra_args=extra_args)
+    def dispatch(
+            self,
+            args: argparse.Namespace,
+            extra_args: Sequence[str] = None,
+            ctx: CliRuntimeContext = None,
+            ) -> Any: # args: argparse.Namespace
+        event = self._build_event(args, extra_args=extra_args, ctx=ctx)
         handler = self._resolve_handler(event.command) or self.fallback_handler
-        return handler(event)
+        result = handler(event)
+        return self.normalize_result(result, event)
 
 
     # called via click binder
-    def _dispatch(self, defpath: str, kwargs: dict[str, Any]) -> Any:
+    def _dispatch(
+            self,
+            defpath: str,
+            kwargs: dict[str, Any],
+            extra_args: Sequence[str] = None,
+            ctx: CliRuntimeContext = None,
+            ) -> Any:
         logging.debug(f"@@@ Dispatcher._dispatcher called {defpath}")
         command = self.cli_def.find(defpath)
         if command is None:
@@ -62,13 +76,20 @@ class Dispatcher:
             command=command,
             params=params,
             event_source=self,
-            extra_args=None, # TODO
+            extra_args=extra_args,
+            ctx=ctx,
         )
         handler = self._resolve_handler(event.command) or self.fallback_handler
-        return handler(event)
+        result =  handler(event)
+        return self.normalize_result(result, event)
 
 
-    def _build_event(self, args: argparse.Namespace, extra_args: Sequence[str] = None):
+    def _build_event(
+            self,
+            args: argparse.Namespace,
+            extra_args: Sequence[str] = None,
+            ctx: CliRuntimeContext = None,
+            ):
         command = getattr(args, "_command", None)
         path = getattr(args, "_path", None)
 
@@ -89,6 +110,7 @@ class Dispatcher:
             params=params,
             event_source=self,
             extra_args=list(extra_args) if extra_args else None,
+            ctx=ctx,
         )
 
         return event
@@ -155,4 +177,16 @@ class Dispatcher:
 
         self._handler_cache[handler_str] = func
         return func
-        
+
+
+    def normalize_result(self, result: Any, event: CliEvent) -> HandlerResult:
+        if result is None:
+            return HandlerResult(defpath=event.command.defpath)
+
+        if isinstance(result, HandlerResult):
+            return result
+
+        return HandlerResult(
+            defpath=event.command.defpath,
+            data=result
+        )

@@ -1,9 +1,9 @@
-# cli_def/argparse/argparse_builder.py
+# cli_def/backend/argparse/argparse_builder.py
 from typing import Iterable, Sequence, Any, Mapping
 import argparse
 import logging
 
-from ..models import (
+from ...models import (
     CliDefNode,
     CliDef,
     CommandDef,
@@ -23,6 +23,7 @@ class ArgparseBuilder:
 
     def __init__(self):
         self._defpath_mapping: dict[str, ArgparseNode] = {}
+        self._early_parser = None
 
     def _register(self, node: CliDefNode, obj: Any):
         self._defpath_mapping[node.defpath] = obj
@@ -43,7 +44,8 @@ class ArgparseBuilder:
             return None
 
         parser = argparse.ArgumentParser(
-            prog=prog or cliDef.key
+            prog=prog or cliDef.key,
+            add_help=False,
         )
         self.build_arguments(early_node.arguments, parser)
         return parser
@@ -124,13 +126,16 @@ class ArgparseBuilder:
         if commandDefs is None or len(commandDefs) == 0:
             return None
 
-        # build parent parsers from of template
+        # build parent parsers from defs of templates
         parent_parsers_map = {}
         for cmdDef in commandDefs:
             if not cmdDef.is_template or cmdDef.key == CommandDef.EARLY:
                 continue
             cmd_templ_parser = self.build_single_command(cmdDef)
             parent_parsers_map[cmdDef.key] = cmd_templ_parser
+            if cmdDef.key == CommandDef.EARLY:
+                #print(f"@@@ early_parser found :{cmdDef.key}")
+                self._early_parser = cmd_templ_parser
             
         firstCmdDef: CommandDef = commandDefs[0]
         group = (firstCmdDef.parent.group or
@@ -147,7 +152,13 @@ class ArgparseBuilder:
             parent_parsers = []
             for tmpl in cmdDef.get_templates():
                 if tmpl.key in parent_parsers_map:
+                    #print(f"@@@ parent_parser :{tmpl.key}")
                     parent_parsers.append(parent_parsers_map[tmpl.key])
+            # # TODO consider forcibly add _early to parents
+            # #print(f"@@@ self_early_parser = {"None" if self._early_parser is None else "Not None"}")
+            # if self._early_parser and self._early_parser not in parent_parsers:
+            #     #print(f"@@@ add _early parser to {cmdDef.defpath}")
+            #     parent_parsers.append(self._early_parser)
 
             cmd_parser = self.build_single_command(cmdDef, subparsers, parent_parsers)
             cmd_parsers.append(cmd_parser)

@@ -7,6 +7,7 @@ from ..runtime.handlers import (
     clear_all_handlers_catalog,
     clear_registry,
     scan_handlers,
+    make_digest_scan_result,
     HandlerMeta,
 )
 
@@ -17,11 +18,9 @@ def main():
 
 
     #clear_all_handlers_catalog()
-    catalog: dict[str, list[HandlerMeta]] = scan_handlers(package, recursive=recursive)
+    result: dict[str, Any] = scan_handlers(package, recursive=recursive)
 
-    digest = {}
-    for key, lst in catalog.items():
-        digest[key] = [meta.to_dict() for meta in lst]
+    digest = make_digest_scan_result(result)
 
     print(json.dumps(digest))
 

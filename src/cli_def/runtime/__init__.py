@@ -1,14 +1,22 @@
 # cli_def/runtime/init.py
 # package marker
 
-from .dispatcher import Dispatcher
+from .runner import CliRunner
+from .dispatcher import CliDispatcher
 from .event import CliEvent
 from .session import CliSession
-from .handlers import cli_def_handler
+from .context import CliRuntimeContext
+from .handlers import cli_def_handler # decorator support
+from .result import HandlerResult, CliResult, ResultKind
 
 __all__ = [
-    "Dispatcher",
+    "CliRunner",
+    "CliDispatcher",
     "CliEvent",
     "CliSession",
-    "cli_def_handler"
+    "CliRuntimeContext",
+    "cli_def_handler",
+    "HandlerResult",
+    "ResultKind",
+    "CliResult",
 ]

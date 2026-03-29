@@ -16,10 +16,10 @@ from cli_def import (
     CliDefParser,
     CliDef,
 )
-from cli_def.click import ClickBuilder
+from cli_def.backend.click import ClickBuilder
 
 def data_path() -> Path:
-    return Path(__file__).parent.parent / "data"
+    return Path(__file__).parent.parent.parent / "data"
 
 @fixture
 def minimum_cli_def_path() -> str:
@@ -93,7 +93,9 @@ def test_click_builder_minimum(minimum_cli_def_path):
     assert "/MyCLI " in result.output, result.output
 
     result = runner.invoke(cli, ["unexpected_param"])
-    assert result.exit_code == 2,result.output
+    # TODO adapt to passthrough
+    #assert result.exit_code == 2,result.output
+    assert result.exit_code == 0,result.output
 
 
 def test_click_builder_simple(simple_cli_def_path):
@@ -135,7 +137,9 @@ def test_click_builder_simple(simple_cli_def_path):
     assert is_entry_in("choice_option", "c", result.output)
 
     result = runner.invoke(cli, ["param1", "unexpected_param"])
-    assert result.exit_code == 2, result.output
+    # TODO adapt to passthrough
+    #assert result.exit_code == 2, result.output
+    assert result.exit_code == 0, result.output
 
 
     
@@ -157,7 +161,9 @@ def test_click_builder_command(command_cli_def_path):
     assert "/MyCLI/command1" in result.output, result.output
 
     result = runner.invoke(cli, ["command1", "unexpected_param"])
-    assert result.exit_code == 2, result.output
+    # TODO adapt to passthrough
+    #assert result.exit_code == 2, result.output
+    assert result.exit_code == 0, result.output
 
     result = runner.invoke(cli, ["command2", "param1"])
 
@@ -179,7 +185,9 @@ def test_click_builder_command(command_cli_def_path):
     assert is_entry_in("choice_option", "c", result.output)
 
     result = runner.invoke(cli, ["command3", "unexpected_param"])
-    assert result.exit_code == 2, result.output
+    # TODO adapt to passthrough
+    #assert result.exit_code == 2, result.output
+    assert result.exit_code == 0, result.output
 
 
 def test_click_builder_command_w_template(command_w_template_cli_def_path):
@@ -217,7 +225,9 @@ def test_click_builder_command_w_template(command_w_template_cli_def_path):
 
     input3 = ["command3", "param1", "--option", "value_of_option", "--flag", "--choice", "c"]
     result = runner.invoke(cli, input3)
-    assert result.exit_code == 2, result.output
+    # TODO adapt to passthrough
+    # assert result.exit_code == 2, result.output
+    assert result.exit_code == 0, result.output
     input3_2 = ["command3", "--flag", "--choice", "c"]
     result = runner.invoke(cli, input3_2)
     assert result.exit_code == 0, result.output
@@ -227,7 +237,9 @@ def test_click_builder_command_w_template(command_w_template_cli_def_path):
 
     input4 = ["command4", "--flag", "--choice", "c"]
     result = runner.invoke(cli, input4)
-    assert result.exit_code == 2, result.output
+    # TODO adapt to passthrough
+    #assert result.exit_code == 2, result.output
+    assert result.exit_code == 0, result.output
     input4_2 = ["command4"]
     result = runner.invoke(cli, input4_2)
     assert result.exit_code == 0, result.output
@@ -293,7 +305,9 @@ def test_arg_parser_subcommand_w_template(subcommand_w_template_cli_def_path):
 
     input3 = ["command1", "subcommand1_3", "param1", "--option", "myoption", "--flag", "--choice", "b"]
     result = runner.invoke(cli, input3)
-    assert result.exit_code == 2, result.output
+    # TODO adapt to passthrough
+    # assert result.exit_code == 2, result.output
+    assert result.exit_code == 0, result.output
 
     input3_2 = ["command1", "subcommand1_3", "--flag", "--choice", "b"]
     result = runner.invoke(cli, input3_2)
@@ -304,7 +318,9 @@ def test_arg_parser_subcommand_w_template(subcommand_w_template_cli_def_path):
 
     input4 = ["command1", "subcommand1_4", "param1", "--option", "myoption", "--flag", "--choice", "b"]
     result = runner.invoke(cli, input4)
-    assert result.exit_code == 2, result.output
+    # TODO adapt to passthrough
+    #assert result.exit_code == 2, result.output
+    assert result.exit_code == 0, result.output
 
     input4_2 = ["command1", "subcommand1_4"]
     result = runner.invoke(cli, input4_2)

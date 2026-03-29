@@ -1,4 +1,4 @@
-# cli_def/click/init.py
+# cli_def/backend/click/init.py
 # package marker
 
 from .click_builder import (

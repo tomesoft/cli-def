@@ -1,4 +1,4 @@
-# cli_def/click/click_builder.py
+# cli_def/backend/click/click_builder.py
 try:
     import click
 except ImportError:
@@ -7,7 +7,7 @@ except ImportError:
     )
 from typing import Any, Mapping, Iterable
 
-from ..models import (
+from ...models import (
     CliDefNode,
     CliDef,
     CommandDef,
@@ -56,6 +56,10 @@ class ClickBuilder:
             help=cliDef.help,
             params=params,
             callback=callback,
+            context_settings={
+                "ignore_unknown_options": True,
+                "allow_extra_args": True,
+            }
         )
 
         self._register(cliDef, cmd)
@@ -103,7 +107,11 @@ class ClickBuilder:
             help=cmdDef.help,
             params=params,
             callback=callback,
-            hidden=cmdDef.is_template
+            hidden=cmdDef.is_template,
+            context_settings={
+                "ignore_unknown_options": True,
+                "allow_extra_args": True,
+            }
         )
 
         self._register(cmdDef, cmd)

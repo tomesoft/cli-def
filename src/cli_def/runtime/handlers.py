@@ -71,29 +71,66 @@ def clear_all_handlers_catalog():
     _ALL_HANDLERS_CATALOG.clear()
 
 
-def scan_handlers(package_path: str, recursive: bool=False):
+def scan_handlers(package_path: str, recursive: bool=False) -> dict[str, Any]:
     #pkg = importlib.import_module(package_path)
-    import_modules(package_path, recursive=recursive)
-    return get_all_handlers_catalog()
+    result = import_modules(package_path, recursive=recursive)
+    return {
+        "scan_coverage": result,
+        "catalog": get_all_handlers_catalog()
+    }
 
+def make_digest_scan_result(scan_result: dict[str, Any]) -> dict[str, Any]:
+    catalog = scan_result["catalog"]
+    digest = {}
+    for key, lst in catalog.items():
+        digest[key] = [meta.to_dict() for meta in lst]
+
+    return {
+        "scan_coverage": scan_result["scan_coverage"],
+        "catalog_digest": digest
+    }
 
 # def import_all_modules(package):
 #     for _, name, _ in pkgutil.walk_packages([package.__name__], package.__name__ + "."):
 #         importlib.import_module(name)
 
-def import_modules(package, recursive: bool):
-    pkg = importlib.import_module(package)
+def import_modules(package, recursive: bool) -> dict[str, bool]:
+    result = {}
+    pkg_or_module = None
+    try:
+        pkg_or_module = importlib.import_module(package)
+        result[package] = True
+    except ImportError:
+        result[package] = False
 
-    if not recursive:
-        # 直下だけ
-        for _, name, ispkg in pkgutil.iter_modules(pkg.__path__):
-            importlib.import_module(f"{package}.{name}")
-    else:
-        # 再帰
-        for _, name, _ in pkgutil.walk_packages(pkg.__path__, package + "."):
-            importlib.import_module(name)
+    #print(f"type(pkg) = {type(pkg_or_module)}")
+
+    if pkg_or_module and hasattr(pkg_or_module, "__path__"):
+        pkg = pkg_or_module
+
+        if not recursive:
+            # 直下だけ
+            for _, name, ispkg in pkgutil.iter_modules(pkg.__path__):
+                pkg = f"{package}.{name}"
+                try:
+                    importlib.import_module(f"{package}.{name}")
+                    result[pkg] = True
+                except ImportError:
+                    result[pkg] = False
+        else:
+            # 再帰
+            for _, name, _ in pkgutil.walk_packages(pkg.__path__, package + "."):
+                try:
+                    importlib.import_module(name)
+                    result[name] = True
+                except ImportError:
+                    result[name] = False
+    return result
 
 
 def can_import(module_name: str) -> bool:
-    spec = importlib.util.find_spec(module_name)
-    return spec is not None
+    try:
+        spec = importlib.util.find_spec(module_name)
+        return spec is not None
+    except ModuleNotFoundError:
+        return False

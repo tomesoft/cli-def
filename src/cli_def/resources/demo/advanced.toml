@@ -3,6 +3,7 @@
 [cli]
 key = "demo"
 help = "Advanced demo CLI"
+prompt = "advanced> " # be used when repl mode
 
 # --- template ----------------------------------------
 
