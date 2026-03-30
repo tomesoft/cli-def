@@ -63,22 +63,30 @@ def print_handler(event: CliEvent):
 # --------------------------------------------------------------------------------
 @cli_def_handler("/cli-def/repl")
 def run_repl(event: CliEvent):
+
     logging.info("=== repl command ===")
+
     cli_def_file = event.params.get("cli_def_file")
     if cli_def_file is None:
         logging.info("load builtin cli_def")
         cli_def = load_builtin_cli_def()
     else:
-        print(f"try to load: {cli_def_file} ")
+        logging.info(f"try to load: {cli_def_file} ")
         cli_def = load_cli_def_path(cli_def_file)
     if cli_def is None:
-        return
-    dump_cli_def_pretty(cli_def)
+        return HandlerResult.make_error(
+            event,
+            f"cli_def could not load: {cli_def_file or "builtin"}",
+        )
+
+    if event.ctx.debug or event.ctx.verbose:
+        dump_cli_def_pretty(cli_def)
     no_ctx_propagate = event.params.get("no_ctx_propagate")
     if not no_ctx_propagate:
         child_ctx = copy.deepcopy(event.ctx)
     else:
         child_ctx = None
+
     print("Type 'help' to list commands, 'exit' to exit")
     session = CliSession(
         cli_def,
@@ -124,21 +132,35 @@ def run_run(event: CliEvent):
     cli_def_file = event.params.get("cli_def_file")
     cli_def = load_cli_def_path(cli_def_file)
     if cli_def is None:
-        return
-    dump_cli_def_pretty(cli_def)
+        return HandlerResult.make_error(
+            event,
+            f"cli_def could not load: {cli_def_file}",
+        )
+
+    if event.ctx.debug or event.ctx.verbose:
+        dump_cli_def_pretty(cli_def)
+
     no_ctx_propagate = event.params.get("no_ctx_propagate")
     if not no_ctx_propagate:
         child_ctx = copy.deepcopy(event.ctx)
     else:
         child_ctx = None
+
     print(f"[run] forwarding args: {event.extra_args}, no_ctx_propagate: {no_ctx_propagate}")
     runner = CliRunner(
         cli_def,
         fallback_handler=print_handler,
         default_ctx=child_ctx,
     )
-    return runner.run(
+
+    result = runner.run(
         argv=event.extra_args if event.extra_args else [],
+    )
+
+    return HandlerResult.make_result(
+        event,
+        "run_run",
+        data=result.all_data(),
     )
 
 
@@ -147,8 +169,19 @@ def run_dump(event: CliEvent):
     cli_def_file = event.params.get("cli_def_file")
     cli_def = load_cli_def_path(cli_def_file)
     if cli_def is None:
-        return
-    dump_cli_def_pretty(cli_def)
+        return HandlerResult.make_error(
+            event,
+            f"cli_def could not load: {cli_def_file}",
+        )
+
+    rendered = []
+    dump_cli_def_pretty(cli_def, rendered=rendered)
+
+    return HandlerResult.make_result(
+        event,
+        "run_dump",
+        data=rendered
+    )
 
 
 @cli_def_handler("/cli-def/scan")
@@ -213,7 +246,12 @@ def run_scan(event: CliEvent):
             #     continue
             print(indent + f"{meta_digest.get("entrypoint")}, desc={meta_digest.get("description")!r}, late_bindings={meta_digest.get("late_bindings")}")
 
-    return {"catalog": catalog}
+    #return {"catalog": catalog}
+    return HandlerResult.make_result(
+        event,
+        "run_scan",
+        data = catalog
+    )
 
 
 

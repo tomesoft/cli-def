@@ -114,7 +114,7 @@ class CliRunner:
 
 
     def _show_help(self):
-        return dump_cli_def_pretty(self.cli_def)
+        return dump_cli_def_pretty(self.cli_def, as_help=True)
 
 
     def _determine_backend(self) -> str:

@@ -120,7 +120,7 @@ args = [
 
 ```python
 from cli_def import CliDefParser
-from cli_def.argparse import ArgparseBuilder
+from cli_def.backend.argparse import ArgparseBuilder
 
 parser = CliDefParser()
 cli_def = parser.parse_from_toml("cli.toml")

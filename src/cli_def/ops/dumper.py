@@ -28,8 +28,12 @@ def _to_short_cls(type) -> str:
         return "cli"
     return "unk"
 
-def _dump_tree(cli_def_node: CliDefNode, *, details:bool=False) -> Sequence[Sequence[str]]:
-    col_keys = ("key", "cls", "option", "mult", "type",  "default", "choices", "help", "entrypoint")
+
+def _dump_tree(cli_def_node: CliDefNode, *, as_help: bool=False) -> Sequence[Sequence[str]]:
+    if as_help:
+        col_keys = ("key", "cls", "option", "mult", "type",  "default", "choices", "help")
+    else:
+        col_keys = ("key", "cls", "option", "mult", "type",  "default", "choices", "help", "entrypoint")
     rows = []
     rows.append(col_keys)
     for node in cli_def_node.iter_all_nodes():
@@ -62,9 +66,9 @@ def _dump_tree(cli_def_node: CliDefNode, *, details:bool=False) -> Sequence[Sequ
     return rows
 
 
-def dump_cli_def_pretty(cli_def: CliDef, details: bool=False):
+def dump_cli_def_pretty(cli_def: CliDef, *, as_help: bool=False, rendered: list[str] = None):
     col_widths = None
-    row_values = _dump_tree(cli_def, details=True)
+    row_values = _dump_tree(cli_def, as_help=as_help)
     #row_values = cli_def.dump_tree()
     # header_row = row_values[0]
     # data_rows = row_values[1:]
@@ -108,6 +112,10 @@ def dump_cli_def_pretty(cli_def: CliDef, details: bool=False):
         lines.append(line)
 
     lines.append(separator)
+
+    if rendered is not None:
+        rendered[:] = lines
+
     # print
     for l in lines:
         print(l)

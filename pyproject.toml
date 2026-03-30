@@ -1,7 +1,7 @@
 [project]
 name = "cli-def"
 version = "0.1.0"
-description = "A declarative DSL for defining CLI structures and generating argparse/click interfaces"
+description = "A declarative DSL for defining CLI structures with a unified runtime and REPL for argparse/click backends"
 requires-python = ">=3.9"
 authors = [{name="Junichi Okadome"}]
 dependencies = []
@@ -15,6 +15,7 @@ where = ["src"]
 
 [project.optional-dependencies]
 click = ["click>=8.0"]
+repl = ["prompt_toolkit"]
 
 [project.scripts]
 cli-def = "cli_def.script.main:main"
