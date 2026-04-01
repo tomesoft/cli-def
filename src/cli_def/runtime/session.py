@@ -1,4 +1,5 @@
 # cli_def/runtime/session.py
+from __future__ import annotations
 from typing import Optional, Callable, Any, Protocol
 from dataclasses import dataclass
 
@@ -13,7 +14,8 @@ from ..models import CliDef
 from ..parsers import CliDefParser
 from .runner import CliRunner
 from .context import CliRuntimeContext
-from .result import ResultStore, ResultView
+from .result import ResultStore, ResultView, HandlerResult
+from .event import CliEvent
 
 # --------------------------------------------------------------------------------
 # CliSession protocol
@@ -38,8 +40,8 @@ class CliSessionProtocol(Protocol):
 @dataclass
 class ReplModeRecord:
     name: str
-    mode_handler: Callable[[str], bool]
-    prompt: Optional[str]
+    mode_handler: Callable[[CliSession, str], bool]
+    prompt: str|None
 
 
 # --------------------------------------------------------------------------------
@@ -64,14 +66,14 @@ class CliSession(CliSessionProtocol):
     def __init__(
             self,
             cli_def: CliDef,
-            fallback_handler :Callable=None,
-            profile: str=None,
-            cli_def_file: str=None,
+            fallback_handler: Callable[[CliEvent], HandlerResult|None]|None = None,
+            profile: str|None = None,
+            cli_def_file: str|None = None,
             *,
-            ctx: CliRuntimeContext=None,
+            ctx: CliRuntimeContext|None = None,
             ):
-        self.cli_def = cli_def
-        self.fallback_handler = fallback_handler
+        self.cli_def: CliDef = cli_def
+        self.fallback_handler: Callable[[CliEvent], HandlerResult|None]|None = fallback_handler
         self.profile = profile
         self._cli_def_file = cli_def_file
         self.runtime_ctx = ctx
@@ -102,16 +104,22 @@ class CliSession(CliSessionProtocol):
 
     def reload_from_text(self, toml_text: str) -> bool:
         parser = CliDefParser()
-        self.cli_def = parser.parse_from_toml_text(toml_text)
+        new_cli_def = parser.parse_from_toml_text(toml_text)
+        if new_cli_def is None:
+            return False
+        self.cli_def = new_cli_def
         self._build_runtime()
         return True
 
-    def reload_from_file(self, path: str=None) -> bool:
+    def reload_from_file(self, path: str|None=None) -> bool:
         path = path or self._cli_def_file
         if path is None:
             return False
         parser = CliDefParser()
-        self.cli_def = parser.parse_from_toml(path)
+        new_cli_def = parser.parse_from_toml(path)
+        if new_cli_def is None:
+            return False
+        self.cli_def = new_cli_def
         self._build_runtime()
         if path != self._cli_def_file:
             self._cli_def_file = path
@@ -130,7 +138,7 @@ class CliSession(CliSessionProtocol):
             self,
             name:str,
             mode_handler: Callable[[CliSession, str], bool],
-            prompt:str = None):
+            prompt: str|None = None):
         self._mode_stack.append(
             ReplModeRecord(
                 name=name,
@@ -147,7 +155,7 @@ class CliSession(CliSessionProtocol):
         return False
 
 
-    def _setup_initial_prompt(self, prompt: str):
+    def _setup_initial_prompt(self, prompt: str|None):
         prompt = prompt or self.cli_def.prompt or self._DEFAULT_PROMPT
         self._initial_prompt = prompt
 
@@ -160,7 +168,7 @@ class CliSession(CliSessionProtocol):
             ) + " "
 
 
-    def repl(self, prompt: str = None):
+    def repl(self, prompt: str|None = None):
         self._setup_initial_prompt(prompt)
         while True:
             prompt = self._make_prompt()

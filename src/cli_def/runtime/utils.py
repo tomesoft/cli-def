@@ -1,4 +1,5 @@
 # cli_def/runtime/utils.py
+from __future__ import annotations
 from typing import Sequence, Any, Callable, Optional, Tuple
 
 import sys
@@ -13,8 +14,8 @@ from .context import CliRuntimeContext
 
 
 def make_runtime_context(
-        args: argparse.Namespace = None,
-        default_ctx: CliRuntimeContext = None,
+        args: argparse.Namespace|None = None,
+        default_ctx: CliRuntimeContext|None = None,
         ) -> CliRuntimeContext:
     if args is None:
         return default_ctx or CliRuntimeContext()
@@ -22,7 +23,7 @@ def make_runtime_context(
     ctx = CliRuntimeContext(
         debug=bool(getattr(args, "debug", False)),
         verbose=bool(getattr(args, "verbose", False)),
-        lang=bool(getattr(args, "lang", "en")),
+        lang=getattr(args, "lang", "en"),
         backend=getattr(args, "backend", None),
         extra={
             k: v for k, v in vars(args).items()

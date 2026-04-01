@@ -1,4 +1,5 @@
 # cli_def/runtime/context.py
+from __future__ import annotations
 from typing import Optional, Any
 from dataclasses import dataclass, field
 

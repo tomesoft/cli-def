@@ -1,11 +1,11 @@
 # cli_def/backend/click/click_builder.py
+from typing import Any, Mapping, Iterable
 try:
     import click
 except ImportError:
     raise ImportError(
         "click is required for click builder. Install with `cli-def[click]`"
     )
-from typing import Any, Mapping, Iterable
 
 from ...models import (
     CliDefNode,
@@ -76,7 +76,8 @@ class ClickBuilder:
         self._attach_params(root, cliDef.arguments)
 
         # コマンド
-        self._attach_commands(root, cliDef.commands)
+        if cliDef.commands:
+            self._attach_commands(root, cliDef.commands)
 
         return root
 

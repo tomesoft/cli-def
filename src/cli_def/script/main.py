@@ -1,4 +1,5 @@
 # cli_def/script/main.py
+from __future__ import annotations
 from typing import Sequence
 import argparse
 import logging
@@ -36,11 +37,12 @@ from .handlers import (
 # main
 # --------------------------------------------------------------------------------
 
-def main(argv: Sequence[str]=None):
+def main(argv: Sequence[str]|None=None):
     if argv is None:
         argv = sys.argv[1:]
 
     cli_def = load_builtin_cli_def()
+    assert cli_def is not None
     runner = CliRunner(cli_def, fallback_handler=print_handler)
 
     result = runner.run(argv)

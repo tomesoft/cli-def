@@ -1,5 +1,6 @@
 # cli_def/runtime/dispatcher.py
-from typing import Callable, Mapping, Any, Sequence
+from __future__ import annotations
+from typing import Callable, Mapping, Any, Sequence, Iterable
 import importlib
 import argparse
 import logging
@@ -21,7 +22,7 @@ from .result import HandlerResult
 # --------------------------------------------------------------------------------
 class CliDispatcher:
 
-    def __init__(self, cli_def: CliDef, fallback_handler: Callable[[CliEvent], Any] = None):
+    def __init__(self, cli_def: CliDef, fallback_handler: Callable[[CliEvent], HandlerResult|None]|Any = None):
         self.cli_def : CliDef = cli_def
         self.fallback_handler : Callable[[CliEvent], Any] = fallback_handler or type(self)._default_fallback_handler
         self._handler_cache: dict[str, Callable] = {}
@@ -37,11 +38,14 @@ class CliDispatcher:
 
 
     def _pre_load_entrypoints(self):
-        executables = self.cli_def.select_all(
-            lambda node: isinstance(node, ExecutableNode)
-            and node.entrypoint is not None
-        )
-        entrypoints = {node.entrypoint for node in executables}
+        # executables = self.cli_def.select_all(
+        #     lambda node: isinstance(node, ExecutableNode)
+        #     and node.entrypoint is not None
+        # )
+        entrypoints = {
+            node.entrypoint for node in self.cli_def.iter_all_nodes()
+            if isinstance(node, ExecutableNode) and node.entrypoint is not None
+            }
         for entrypoint in entrypoints:
             self._resolve_handler_entrypoint(entrypoint)
 
@@ -49,8 +53,8 @@ class CliDispatcher:
     def dispatch(
             self,
             args: argparse.Namespace,
-            extra_args: Sequence[str] = None,
-            ctx: CliRuntimeContext = None,
+            extra_args: Sequence[str]|None = None,
+            ctx: CliRuntimeContext|None = None,
             ) -> Any: # args: argparse.Namespace
         event = self._build_event(args, extra_args=extra_args, ctx=ctx)
         handler = self._resolve_handler(event.command) or self.fallback_handler
@@ -63,13 +67,14 @@ class CliDispatcher:
             self,
             defpath: str,
             kwargs: dict[str, Any],
-            extra_args: Sequence[str] = None,
-            ctx: CliRuntimeContext = None,
+            extra_args: Sequence[str]|None = None,
+            ctx: CliRuntimeContext|None = None,
             ) -> Any:
         logging.debug(f"@@@ Dispatcher._dispatcher called {defpath}")
         command = self.cli_def.find(defpath)
         if command is None:
             raise RuntimeError(f"Command not found from defpath: [{defpath}]")
+        assert isinstance(command, CommandDef)
         params = self._normalize(command, dict(kwargs))
         event = CliEvent(
             path=defpath,
@@ -87,8 +92,8 @@ class CliDispatcher:
     def _build_event(
             self,
             args: argparse.Namespace,
-            extra_args: Sequence[str] = None,
-            ctx: CliRuntimeContext = None,
+            extra_args: Sequence[str]|None = None,
+            ctx: CliRuntimeContext|None = None,
             ):
         command = getattr(args, "_command", None)
         path = getattr(args, "_path", None)

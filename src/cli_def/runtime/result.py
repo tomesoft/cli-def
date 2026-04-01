@@ -1,4 +1,5 @@
 # cli_def/runtime/result.py
+from __future__ import annotations
 
 from enum import Enum, auto
 from dataclasses import dataclass
@@ -35,7 +36,7 @@ class HandlerResult:
     message: Optional[str] = None
 
     @classmethod
-    def make_result(cls, event: CliEvent, message: str = None, data: Any = None, kind: ResultKind = ResultKind.OK) -> "HandlerResult":
+    def make_result(cls, event: CliEvent, message: str|None = None, data: Any = None, kind: ResultKind = ResultKind.OK) -> "HandlerResult":
         return cls(
             defpath=event.command.defpath,
             kind=kind,
@@ -44,7 +45,7 @@ class HandlerResult:
         )
 
     @classmethod
-    def make_error(cls, event: CliEvent, message: str = None, data: Any = None) -> "HandlerResult":
+    def make_error(cls, event: CliEvent, message: str|None = None, data: Any = None) -> "HandlerResult":
         return cls(
             defpath=event.command.defpath,
             kind=ResultKind.FAILED,

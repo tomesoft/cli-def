@@ -1,4 +1,5 @@
 # cli_def/demo_handlers.py
+from __future__ import annotations
 
 from .runtime import CliEvent, HandlerResult
 

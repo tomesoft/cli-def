@@ -1,4 +1,5 @@
 # cli_def/models/cli_def_node.py
+from __future__ import annotations
 from typing import Optional, Any, Iterator, Mapping, Callable, Iterable, Sequence
 from dataclasses import dataclass, field
 import re
@@ -9,8 +10,8 @@ import re
 # --------------------------------------------------------------------------------
 @dataclass
 class CliDefNode:
-    key: str = None
-    parent: Optional["CliDefNode"] = None
+    key: str = ""
+    parent: CliDefNode|None = None
     extra_defs: dict[str, Any] = field(default_factory=dict)
 
     @property
@@ -27,7 +28,7 @@ class CliDefNode:
         else:
             return 0
 
-    def iter_all_nodes(self) -> Iterator["CliDefNode"]:
+    def iter_all_nodes(self) -> Iterator[CliDefNode]:
         yield self
         for child in self.iter_children():
             yield from child.iter_all_nodes()
@@ -37,20 +38,20 @@ class CliDefNode:
         return iter([])
 
 
-    def find(self, path: str) -> "CliDefNode"|None:
+    def find(self, path: str) -> CliDefNode|None:
         for node in self.iter_all_nodes():
             if node.defpath == path:
                 return node
         return None
 
 
-    def select_first(self, pred: Callable[["CliDefNode"], Any]) -> "CliDefNode" | None:
+    def select_first(self, pred: Callable[[CliDefNode], Any]) -> CliDefNode|None:
         for node in self.iter_all_nodes():
             if pred(node):
                 return node
 
 
-    def select_all(self, pred: Callable[["CliDefNode"], Any]) -> Iterable["CliDefNode"]:
+    def select_all(self, pred: Callable[[CliDefNode], Any]) -> Iterable[CliDefNode]:
         selected = []
         for node in self.iter_all_nodes():
             if pred(node):
@@ -67,7 +68,7 @@ class CliDefNode:
             cells = []
             for col in col_keys:
                 if col == "key":
-                    cell = "  " * node.deflevel + node.key
+                    cell = "  " * node.deflevel + (node.key or "")
                 elif col == "cls":
                     cell = type(node).__name__
                 else:
@@ -82,4 +83,5 @@ class CliDefNode:
 # base class of CliDef and CommandDef
 # --------------------------------------------------------------------------------
 class ExecutableNode(CliDefNode):
-    entrypoint: Optional[str] = None
+    entrypoint: str|None = None
+    group: str|None = None

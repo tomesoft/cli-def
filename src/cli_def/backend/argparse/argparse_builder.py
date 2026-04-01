@@ -7,6 +7,7 @@ from ...models import (
     CliDefNode,
     CliDef,
     CommandDef,
+    ExecutableNode,
     ArgumentDef,
     MultDef,
 )
@@ -38,8 +39,8 @@ class ArgparseBuilder:
         return self._defpath_mapping
 
 
-    def build_early_argparse(self, cliDef: CliDef, prog: str = None) -> argparse.ArgumentParser:
-        early_node: CommandDef = cliDef.select_first(lambda n: n.key == CommandDef.EARLY)
+    def build_early_argparse(self, cliDef: CliDef, prog: str|None = None) -> argparse.ArgumentParser|None:
+        early_node = cliDef.select_first(lambda n: n.key == CommandDef.EARLY)
         if early_node is None:
             return None
 
@@ -47,11 +48,12 @@ class ArgparseBuilder:
             prog=prog or cliDef.key,
             add_help=False,
         )
+        assert isinstance(early_node, CommandDef)
         self.build_arguments(early_node.arguments, parser)
         return parser
 
 
-    def build_argparse(self, cliDef: CliDef, prog: str = None) -> argparse.ArgumentParser:
+    def build_argparse(self, cliDef: CliDef, prog: str|None = None) -> argparse.ArgumentParser:
         parser = argparse.ArgumentParser(
             prog=prog or cliDef.key
         )
@@ -59,7 +61,8 @@ class ArgparseBuilder:
         self._register(cliDef, parser)
 
         self.build_arguments(cliDef.arguments, parser)
-        self.build_commands(cliDef.commands, parser)
+        if cliDef.commands:
+            self.build_commands(cliDef.commands, parser)
 
         self._attach_metadata(parser, cliDef, cliDef.get_command_sequence())
 
@@ -138,6 +141,7 @@ class ArgparseBuilder:
                 self._early_parser = cmd_templ_parser
             
         firstCmdDef: CommandDef = commandDefs[0]
+        assert isinstance(firstCmdDef.parent, ExecutableNode)
         group = (firstCmdDef.parent.group or
                 ("sub" * firstCmdDef.parent.deflevel) + "command"
         )
@@ -191,14 +195,15 @@ class ArgparseBuilder:
                 **kwargs
             )
         self.build_arguments(cmdDef.arguments, parser)
-        self.build_commands(cmdDef.subcommands, parser)
+        if cmdDef.subcommands:
+            self.build_commands(cmdDef.subcommands, parser)
 
         self._register(cmdDef, parser)
         self._attach_metadata(parser, cmdDef, cmdDef.get_command_sequence())
 
         return parser
 
-    def _attach_metadata(self, parser, command: CommandDef, path):
+    def _attach_metadata(self, parser, command: CommandDef|CliDef, path):
         parser.set_defaults(
             _path=path,
             _command=command,   # ← これも入れる（重要）

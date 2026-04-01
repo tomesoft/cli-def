@@ -1,4 +1,5 @@
 # cli_def/backend/click/click_binder.py
+from typing import Any, Mapping, Optional
 import logging
 
 try:
@@ -7,7 +8,6 @@ except ImportError:
     raise ImportError(
         "click is required for click builder. Install with `cli-def[click]`"
     )
-from typing import Any, Mapping
 
 from ...runtime import (
     CliDispatcher,
@@ -16,7 +16,7 @@ from ...runtime import (
 
 class ClickBinder:
 
-    def __init__(self, dispatcher: CliDispatcher, ctx: CliRuntimeContext = None):
+    def __init__(self, dispatcher: CliDispatcher, ctx: Optional[CliRuntimeContext] = None):
         self.dispatcher = dispatcher
         self.runtime_ctx = ctx
 

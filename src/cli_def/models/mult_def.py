@@ -1,4 +1,5 @@
 # cli_def/models/mult_def.py
+from __future__ import annotations
 from typing import Optional, Any, Iterator, Mapping, Tuple
 from dataclasses import dataclass, field
 import re
@@ -25,7 +26,7 @@ class MultDef:
 
 
     @classmethod
-    def from_str(cls, text: str) -> "MultDef":
+    def from_str(cls, text: str) -> MultDef:
         text = text.strip()
 
         # 記号系

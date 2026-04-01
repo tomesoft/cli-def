@@ -1,5 +1,6 @@
 # cli_def/runtime/runner.py
-from typing import Sequence, Iterable, Any, Callable, TYPE_CHECKING
+from __future__ import annotations
+from typing import Sequence, Iterable, Any, Callable, TYPE_CHECKING, Tuple
 
 import sys
 import argparse
@@ -30,32 +31,33 @@ class CliRunner:
     def __init__(
             self,
             cli_def: CliDef,
-            fallback_handler: Callable[[CliEvent], Any] = None,
+            fallback_handler: Callable[[CliEvent], HandlerResult|None]|None = None,
             *,
             default_backend: str="argparse",
-            default_ctx: CliRuntimeContext = None,
-            session: CliSession = None,
+            default_ctx: CliRuntimeContext|None = None,
+            session: CliSession|None = None,
             ):
         self.cli_def = cli_def
         self.fallback_handler = fallback_handler
         self.default_backend = default_backend
-        self.backend: str = None
+        self.backend: str|None = None
         self.default_ctx = default_ctx
         self.session = session
 
-        self.ctx: CliRuntimeContext = None
+        self.ctx: CliRuntimeContext|None = None
         self.builder: ArgparseBuilder = ArgparseBuilder()
         self.dispatcher: CliDispatcher = CliDispatcher(self.cli_def, fallback_handler=self.fallback_handler)
 
 
-    def run(self, argv: Iterable[str]| str = None) -> CliResult:
+    def run(self, argv: Iterable[str]| str | None = None) -> CliResult:
         argv = self._normalize_argv(argv)
 
         early_args, remaining = self._early_parse(argv)
         self.ctx = self._make_context(early_args)
 
         if self._should_show_help(argv):
-            return self._show_help()
+            self._show_help()
+            return CliResult([], exit_code=1)
 
         self._setup_runtime()
 
@@ -74,7 +76,7 @@ class CliRunner:
                 return 1
         return 0
 
-    def _normalize_argv(self, argv: Iterable[str]) -> list[str]:
+    def _normalize_argv(self, argv: Iterable[str]|None) -> list[str]:
         if argv is None:
             argv = sys.argv[1:]
 
@@ -85,7 +87,7 @@ class CliRunner:
         return list(argv)
 
 
-    def _early_parse(self, argv: Sequence[str]):
+    def _early_parse(self, argv: Sequence[str]) -> Tuple[argparse.Namespace|None, Sequence[str]]:
         parser = self._build_early_parser()
         if parser:
             return parser.parse_known_args(argv)
@@ -97,11 +99,12 @@ class CliRunner:
         return early_parser
 
 
-    def _make_context(self, args: argparse.Namespace=None):
+    def _make_context(self, args: argparse.Namespace|None=None):
         return make_runtime_context(args, self.default_ctx)
 
 
     def _setup_runtime(self):
+        assert self.ctx is not None
         setup_logging(self.ctx)
 
 
@@ -114,10 +117,11 @@ class CliRunner:
 
 
     def _show_help(self):
-        return dump_cli_def_pretty(self.cli_def, as_help=True)
+        dump_cli_def_pretty(self.cli_def, as_help=True)
 
 
     def _determine_backend(self) -> str:
+        assert self.ctx is not None
         backend = self.ctx.backend or self.default_backend
         return backend or "argparse"
 

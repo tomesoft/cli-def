@@ -1,4 +1,5 @@
 # cli_def/script/handlers.py
+from __future__ import annotations
 from typing import Sequence, Any
 import argparse
 import logging
@@ -79,6 +80,7 @@ def run_repl(event: CliEvent):
             f"cli_def could not load: {cli_def_file or "builtin"}",
         )
 
+    assert event.ctx is not None
     if event.ctx.debug or event.ctx.verbose:
         dump_cli_def_pretty(cli_def)
     no_ctx_propagate = event.params.get("no_ctx_propagate")
@@ -108,6 +110,8 @@ def run_repl(event: CliEvent):
 def run_demo(event: CliEvent):
     profile = event.params.get("profile") or "beginner"
     cli_def = load_builtin_cli_def("demo", profile + ".toml")
+    if cli_def is None:
+        return HandlerResult.make_error(event, "builtin cli_def file could not load")
     dump_cli_def_pretty(cli_def)
     print(f"=== demo: {profile} ===")
     print("Type 'help' to list commands, 'exit' to exit")
@@ -130,13 +134,17 @@ def run_demo(event: CliEvent):
 def run_run(event: CliEvent):
     logging.info("=== run command ===")
     cli_def_file = event.params.get("cli_def_file")
+    assert cli_def_file is not None
     cli_def = load_cli_def_path(cli_def_file)
+    if cli_def is None:
+        return HandlerResult.make_error(event, f"cli_def file could not load: {cli_def_file}")
     if cli_def is None:
         return HandlerResult.make_error(
             event,
             f"cli_def could not load: {cli_def_file}",
         )
 
+    assert event.ctx is not None
     if event.ctx.debug or event.ctx.verbose:
         dump_cli_def_pretty(cli_def)
 
@@ -167,6 +175,7 @@ def run_run(event: CliEvent):
 def run_dump(event: CliEvent):
     logging.info("=== dump command ===")
     cli_def_file = event.params.get("cli_def_file")
+    assert cli_def_file is not None
     cli_def = load_cli_def_path(cli_def_file)
     if cli_def is None:
         return HandlerResult.make_error(
@@ -193,10 +202,11 @@ def run_scan(event: CliEvent):
     recursive = event.params.get("recursive")
     print(f"package_name: {package_name}")
 
+    assert package_name is not None
     if not can_import(package_name):
         print(f"[ERROR] package not found: {package_name}")
         return HandlerResult.make_error(
-            event.command.defpath,
+            event,
             f"[ERROR] package not found: {package_name}"
         )
 
@@ -229,7 +239,7 @@ def run_scan(event: CliEvent):
         print("handlers not found")
         return HandlerResult.make_result(event, "handlers not found", digest)
 
-
+    assert event.ctx is not None
     if event.ctx.verbose:
         print("=== scan coverage ===")
         for k, v in digest["scan_coverage"].items():

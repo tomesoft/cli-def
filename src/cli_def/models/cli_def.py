@@ -1,5 +1,6 @@
 # cli_def/model.py
-from typing import Optional, Any, Iterator, Mapping
+from __future__ import annotations
+from typing import Sequence
 from dataclasses import dataclass, field
 import re
 
@@ -14,15 +15,14 @@ from .argument_def import ArgumentDef
 # --------------------------------------------------------------------------------
 @dataclass
 class CliDef(ExecutableNode):
-    help: Optional[str] = None
+    help: str|None = None
     arguments: list[ArgumentDef] = field(default_factory=list)
-    commands: Optional[list["CommandDef"]] = None
-    group: Optional[str] = None
-    prompt: Optional[str] = None # prompt on interactive/repl mode
+    commands: list[CommandDef]|None = None
+    prompt: str|None = None # prompt on interactive/repl mode
 
     def iter_children(self):
         yield from self.arguments or []
         yield from self.commands or []
 
-    def get_command_sequence(self) -> list[str]:
+    def get_command_sequence(self) -> Sequence[str]:
         return [self.key]

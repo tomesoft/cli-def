@@ -13,7 +13,7 @@ args = [
 
 [cli._shared]
 args = [
-    {key="verify", option="--verify", is_flag=true, default=false},
+    # {key="verify", option="--verify", is_flag=true, default=false},
 ]
 
 [cli.repl]

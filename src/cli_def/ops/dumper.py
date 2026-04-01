@@ -1,5 +1,6 @@
 # cli_def/ops/dumper.py
-from typing import Sequence, Any
+from __future__ import annotations
+from typing import Sequence, Any, Optional
 
 from ..models import CliDef, CliDefNode, MultDef
 
@@ -11,7 +12,7 @@ from ..models import CliDef, CliDefNode, MultDef
 #         ) -> list[str]:
 #     pass
 
-def to_display_text(val: Any, none_expr: str = None) -> str:
+def to_display_text(val: Any, none_expr: Optional[str] = None) -> str:
     if none_expr is None:
         none_expr = ""
     if val is None:
@@ -44,7 +45,7 @@ def _dump_tree(cli_def_node: CliDefNode, *, as_help: bool=False) -> Sequence[Seq
             elif col == "cls":
                 cell = _to_short_cls(type(node))
             elif col == "mult":
-                mult: MultDef = getattr(node, "mult", None)
+                mult: MultDef|None = getattr(node, "mult", None)
                 cell = mult.to_str() if mult else None
             elif col == "option":
                 if opt := getattr(node, "option", None):
@@ -66,8 +67,8 @@ def _dump_tree(cli_def_node: CliDefNode, *, as_help: bool=False) -> Sequence[Seq
     return rows
 
 
-def dump_cli_def_pretty(cli_def: CliDef, *, as_help: bool=False, rendered: list[str] = None):
-    col_widths = None
+def dump_cli_def_pretty(cli_def: CliDef, *, as_help: bool=False, rendered: list[str]|None = None):
+    col_widths: list[int]|None = None
     row_values = _dump_tree(cli_def, as_help=as_help)
     #row_values = cli_def.dump_tree()
     # header_row = row_values[0]
@@ -87,6 +88,7 @@ def dump_cli_def_pretty(cli_def: CliDef, *, as_help: bool=False, rendered: list[
     col_rjust[0] = True
     lines = []
     gap = "  "
+    assert col_widths is not None
     separator = "-" * (sum(col_widths) + len(gap) * (len(col_widths)-1))
     def render_row(
             disp_vals: Sequence[Any],

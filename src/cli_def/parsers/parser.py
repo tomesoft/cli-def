@@ -1,4 +1,5 @@
 # cli_def/parsers/parser.py
+from __future__ import annotations
 
 from typing import Mapping, Any, Iterable
 import tomllib
@@ -18,7 +19,7 @@ from ..models import (
 # --------------------------------------------------------------------------------
 class CliDefParser:
 
-    def parse_from_toml(self, path_to_toml_file: str) -> CliDef | None:
+    def parse_from_toml(self, path_to_toml_file: str|Path) -> CliDef | None:
         mapping = {}
         with open(path_to_toml_file, "rb") as file:
             mapping = tomllib.load(file)
@@ -37,8 +38,8 @@ class CliDefParser:
 
     def parse_from_mapping(self, mapping: Mapping[str, Any]) -> CliDef | None:
         cliDef = CliDef()
-        argDefs = []
-        commandDefs = []
+        argDefs:Iterable[ArgumentDef] = []
+        commandDefs:Iterable[CommandDef] = []
         for key, value in mapping.get("cli", {}).items():
             if key == "args":
                 argDefs = self.parse_cli_argument_defs(key, value)
@@ -53,14 +54,14 @@ class CliDefParser:
 
         for argDef in argDefs:
             argDef.parent = cliDef
-        cliDef.arguments = argDefs
+        cliDef.arguments = list(argDefs)
         for cmdDef in commandDefs:
             cmdDef.parent = cliDef
         cliDef.commands = commandDefs
         return cliDef
 
 
-    def parse_cli_argument_defs(self, key: str, mappings: Iterable[Mapping[str, Any]]) -> Iterable[ArgumentDef] | None:
+    def parse_cli_argument_defs(self, key: str, mappings: Iterable[Mapping[str, Any]]) -> Iterable[ArgumentDef]:
         argDefs = []
         for mapping in mappings:
             argDef = ArgumentDef.from_mapping(mapping)
@@ -71,7 +72,7 @@ class CliDefParser:
         return argDefs
 
 
-    def parse_cli_command_def(self, key: str, mapping: Mapping[str, Any]) -> CommandDef | None:
+    def parse_cli_command_def(self, key: str, mapping: Mapping[str, Any]) -> CommandDef:
         commandDef = CommandDef(
             key=key,
             is_template=key.startswith("_"), # special rule
@@ -83,7 +84,7 @@ class CliDefParser:
                 if argDefs:
                     for argDef in argDefs:
                         argDef.parent = commandDef
-                    commandDef.arguments = argDefs
+                    commandDef.arguments = list(argDefs)
             elif hasattr(commandDef, key):
                 setattr(commandDef, key, value)
             elif isinstance(value, Mapping):

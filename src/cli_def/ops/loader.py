@@ -1,4 +1,5 @@
 # cli_def/ops/loader.py
+from __future__ import annotations
 
 from typing import Mapping, Any
 from pathlib import Path
@@ -18,7 +19,7 @@ def load_toml_beside(here: Path, toml_file: str) -> Mapping[str, Any]:
         return tomllib.load(f)
 
 
-def load_cli_def_beside(here: Path, toml_file: str) -> CliDef:
+def load_cli_def_beside(here: Path, toml_file: str) -> CliDef|None:
     """
     Typical usage: load_cli_def_beside(Path(__file__), "cli_def.toml")
     """
@@ -26,7 +27,7 @@ def load_cli_def_beside(here: Path, toml_file: str) -> CliDef:
     return load_cli_def_path(toml_path)
 
 
-def load_cli_def_path(path_to_toml: str) -> CliDef:
+def load_cli_def_path(path_to_toml: str|Path) -> CliDef|None:
     if path_to_toml is None:
         return None
     if not Path(path_to_toml).exists():

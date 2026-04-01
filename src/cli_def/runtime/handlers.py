@@ -1,4 +1,5 @@
 # cli_def/runtime/handlers.py
+from __future__ import annotations
 
 from typing import Callable, Dict, List, Iterable, Optional, Any
 from dataclasses import dataclass
@@ -14,8 +15,8 @@ class HandlerMeta:
     path: str
     module: str
     name: str
-    tags: Optional[set[str]] = None
-    description: Optional[str] = None
+    tags: set[str]|None = None
+    description: str|None = None
     late_bindings: bool = False
 
     @property
@@ -37,8 +38,8 @@ class HandlerMeta:
 def cli_def_handler(
         path: str, *,
         late_bindings: bool = False,
-        tags: Iterable[str] = None,
-        description: str = None,
+        tags: Iterable[str]|None = None,
+        description: str|None = None,
         ) -> Callable[[Callable], Callable]:
     def decorator(func: Callable):
         meta = HandlerMeta(

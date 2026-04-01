@@ -1,7 +1,7 @@
 # cli_def/model.py
+from __future__ import annotations
 from typing import Optional, Any, Iterator, Mapping
 from dataclasses import dataclass, field
-import re
 
 from .abstract_node import CliDefNode
 from .mult_def import MultDef
@@ -14,15 +14,15 @@ from .mult_def import MultDef
 # --------------------------------------------------------------------------------
 @dataclass
 class ArgumentDef(CliDefNode):
-    dest: str = None
-    option: Optional[str] = None # "--<option>"
-    aliases: Optional[list[str]] = None
-    type: Optional[str] = None
+    dest: str|None = None
+    option: str|None = None # "--<option>"
+    aliases: list[str]|None = None
+    type: str|None = None
     mult: MultDef = field(default_factory=lambda: MultDef(1, 1))
-    choices: Optional[list[Any]] = None
-    default: Optional[Any] = None
-    help: Optional[str] = None
-    is_flag: Optional[bool] = None
+    choices: list[Any]|None = None
+    default: Any|None = None
+    help: str|None = None
+    is_flag: bool|None = None
 
     def __post_init__(self):
         if self.mult is None:
@@ -45,7 +45,7 @@ class ArgumentDef(CliDefNode):
         return self.option is None
 
     @classmethod
-    def from_mapping(cls, mapping: Mapping[str, Any]) -> "ArgumentDef":
+    def from_mapping(cls, mapping: Mapping[str, Any]) -> ArgumentDef:
         known = {}
         extra = {}
 

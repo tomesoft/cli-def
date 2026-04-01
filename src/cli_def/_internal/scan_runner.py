@@ -1,4 +1,5 @@
 # cli_def/_internal/scan_runner.py
+from __future__ import annotations
 from typing import Any
 import sys
 import json
