@@ -29,19 +29,22 @@ See [README](README.md) for overview.
 
 ### Runtime
 
+- CliRunner
+- CliSession supports REPL
 - CliEvent abstraction
 - Dispatcher
-- Entrypoint (`module:function`)
+- Entrypoint (`module:function`) early and late bindings
 - Argument normalization based on multiplicity
 
 ### Builders
 
 - ArgparseBuilder
-- ClickBuilder (basic support)
+- ClickBuilder
 
 ### Tooling
 
 - REPL (interactive mode)
+- Selectable backend argparse / click
 - Demo CLI (beginner / advanced)
 - CLI chaining (`run` command)
 
@@ -49,10 +52,6 @@ See [README](README.md) for overview.
 
 ## 🚧 In Progress
 
-- Click backend parity with argparse
-  - Dispatcher integration
-  - Event consistency
-  - Argument handling alignment
 
 ---
 
