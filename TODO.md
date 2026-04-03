@@ -9,6 +9,7 @@ See [README](README.md) for overview.
 ## ✅ Done
 
 ### Core Concept
+
 - Declarative CLI definition
 - Command / subcommand structure
 - Positional / optional / flag arguments
@@ -16,25 +17,30 @@ See [README](README.md) for overview.
 - Command templates (inheritance model)
 
 ### Parser
+
 - Parse CLI definitions from TOML
 
 ### AST
+
 - CliDef (root node)
 - CommandDef (command / subcommand)
 - ArgumentDef (argument / option)
 - MultDef (multiplicity normalization)
 
 ### Runtime
+
 - CliEvent abstraction
 - Dispatcher
 - Entrypoint (`module:function`)
 - Argument normalization based on multiplicity
 
 ### Builders
+
 - ArgparseBuilder
 - ClickBuilder (basic support)
 
 ### Tooling
+
 - REPL (interactive mode)
 - Demo CLI (beginner / advanced)
 - CLI chaining (`run` command)
@@ -53,6 +59,7 @@ See [README](README.md) for overview.
 ## 🟡 Next (High Priority)
 
 ### Runtime Features
+
 - Evaluator
   - Argument validation
   - Constraint handling
@@ -67,12 +74,14 @@ See [README](README.md) for overview.
 ## 🔵 Next (Medium Priority)
 
 ### Definition Extensions
+
 - Handler definition abstraction (HandlerDef)
 - Base types (str, int, etc.)
 - Spec types (e.g. PathSpec)
 - Constraint definitions
 
 ### Tooling
+
 - Demo improvements
 - CLI inspection tools
 - AST visualization utilities
@@ -82,6 +91,7 @@ See [README](README.md) for overview.
 ## 🧪 Later (Exploratory)
 
 ### Advanced Features
+
 - Reverse builder
   - argparse → CliDef AST
 

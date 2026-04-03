@@ -30,7 +30,8 @@ class CliSessionProtocol(Protocol):
     def pop_repl_mode(self) -> bool:
         ...
 
-    def get_result_store(self) -> ResultStore:
+    @property
+    def result_store(self) -> ResultStore:
         ...
 
 
@@ -78,7 +79,7 @@ class CliSession(CliSessionProtocol):
         self._cli_def_file = cli_def_file
         self.runtime_ctx = ctx
 
-        self.result_store = ResultStore()
+        self._result_store = ResultStore()
 
         # self._prompt_stack: list[str] = []
         # self._repl_stack: list[Callable[[str], Any]] = []
@@ -125,8 +126,9 @@ class CliSession(CliSessionProtocol):
             self._cli_def_file = path
         return True
 
-    def get_result_store(self) -> ResultStore:
-        return self.result_store
+    @property
+    def result_store(self) -> ResultStore:
+        return self._result_store
 
     # --- execution -------------------------------------------------
 

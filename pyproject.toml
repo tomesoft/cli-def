@@ -16,6 +16,7 @@ where = ["src"]
 [project.optional-dependencies]
 click = ["click>=8.0"]
 repl = ["prompt_toolkit"]
+dev = ["pytest"]
 
 [project.scripts]
 cli-def = "cli_def.script.main:main"

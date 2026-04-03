@@ -2,6 +2,9 @@
 
 A declarative DSL for defining CLI structures with a unified runtime and REPL for `argparse`/`click` backends.
 
+project page:
+<https://cli-def.tomesoft.net>
+
 ---
 
 ## ✨ Features
@@ -215,9 +218,40 @@ def my_command_handler(event: CliEvent):
         print(text)
 ```
 
-### Usecase #2 : Build argparse.ArgumentParser
+### Usecase #2 :  Build CLI and go REPL
 
-The second usecase is building argparse.ArgumentBuilder from CLI definition TOML instead of handwriting it. And you can easily join your existing code.
+The second usecase is REPL mode.
+
+
+``` python
+from cli_def import CliDefParser
+from cli_def.runtime import CliSession, CliEvent, cli_def_handler
+
+def main():
+    parser = CliDefParser()
+    cli_def = parser.parse_from_toml("cli_def.toml")
+
+    session = CliSession(cli_def)
+    session.repl(prompt="MyCLI> ")
+
+    # you can access to the stored result of the session
+    # result = session.result_store.all_data()
+
+    return 0
+
+# another implementation option, handling specific command with early binding function that is marked decorator `cli_def_handler`
+@cli_def_handler("/MyCLI/hello")
+def do_hello(event: CliEvent):
+    name = event.params.get("name")
+    text = f"Hello {name}"
+    if event.params.get("to_upper"):
+        text = text.upper()
+    print(text)
+```
+
+### Usecase #3 : Build argparse.ArgumentParser
+
+The third usecase is building argparse.ArgumentBuilder from CLI definition TOML instead of handwriting it. And you can easily join your existing code.
 
 ```python
 from cli_def import CliDefParser
@@ -250,18 +284,6 @@ TOML / Model
 ↓
 CliDef (AST)
 ↓
-Runtime Runner (selectable argparse / click backend)
-↓
-Executable CLI / REPL
-```
-
-or
-
-```text
-TOML / Model
-↓
-CliDef (AST)
-↓
 Builder (argparse / click)
 ↓
 Runtime (CliEvent / Dispatcher)
@@ -282,6 +304,7 @@ cli_def/
   ops/
   parsers/
   runtime/
+  script/
 ```
 
 ---
@@ -290,6 +313,12 @@ cli_def/
 
 ```bash
 pip install cli-def[click]
+```
+
+for developers;
+
+```bash
+pip install -e ".[dev]"
 ```
 
 ---

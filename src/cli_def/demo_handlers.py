@@ -6,7 +6,7 @@ from .runtime import CliEvent, HandlerResult
 # --------------------------------------------------------------------------------
 # handlers for beginner profile
 # --------------------------------------------------------------------------------
-def echo(event: CliEvent):
+def echo(event: CliEvent) -> HandlerResult:
     msg = event.params.get("message", [])
     result = " ".join(msg)
     print(result)
@@ -18,7 +18,7 @@ def echo(event: CliEvent):
     )
 
 
-def greet(event: CliEvent):
+def greet(event: CliEvent) -> HandlerResult:
     name = event.params.get("name") or "world"
     text = f"Hello, {name}!"
 
@@ -37,7 +37,7 @@ def greet(event: CliEvent):
 # --------------------------------------------------------------------------------
 # handlers for advanced profile
 # --------------------------------------------------------------------------------
-def build(event: CliEvent):
+def build(event: CliEvent) -> HandlerResult:
     target = event.params["target"]
     verbose = event.params.get("verbose", False)
 
@@ -51,7 +51,7 @@ def build(event: CliEvent):
     )
 
 
-def test(event: CliEvent):
+def test(event: CliEvent) -> HandlerResult:
     pattern = event.params.get("pattern") or "all"
     verbose = event.params.get("verbose", False)
 
@@ -65,7 +65,7 @@ def test(event: CliEvent):
     )
 
 
-def deploy(event: CliEvent):
+def deploy(event: CliEvent) -> HandlerResult:
     env = event.params.get("env") or "dev"
     force = event.params.get("force", False)
 
