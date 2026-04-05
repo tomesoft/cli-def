@@ -1,15 +1,15 @@
-# cli_def/resources/demo/advanced.toml
+# cli_def/demo/profiles/advanced.toml
 
 [cli]
 key = "demo"
-help = "Advanced demo CLI"
+help = "Advanced demo CLI build-test-deploy"
 prompt = "advanced> " # be used when repl mode
 
 # --- template ----------------------------------------
 
 [cli._common]
 args = [
-  {key="verbose", option="--verbose", is_flag=true}
+  {key="verbose", option="--verbose", aliases=["-v"], is_flag=true}
 ]
 
 # --- commands ----------------------------------------
@@ -20,7 +20,7 @@ inherit_from = ["_common"]
 args = [
   {key="target", mult="1", type="str"}
 ]
-entrypoint = "cli_def.demo_handlers:build"
+entrypoint = "cli_def.demo.handlers:build"
 
 [cli.test]
 help = "Run tests"
@@ -28,7 +28,7 @@ inherit_from = ["_common"]
 args = [
   {key="pattern", mult="?", type="str"}
 ]
-entrypoint = "cli_def.demo_handlers:test"
+entrypoint = "cli_def.demo.handlers:test"
 
 [cli.deploy]
 help = "Deploy application"
@@ -36,4 +36,4 @@ args = [
   {key="env", option="--env", mult="?", type="str"},
   {key="force", option="--force", is_flag=true}
 ]
-entrypoint = "cli_def.demo_handlers:deploy"
+entrypoint = "cli_def.demo.handlers:deploy"

@@ -1,4 +1,4 @@
-# cli_def/resources/demo/beginner.toml
+# cli_def/demo/profiles/beginner.toml
 
 [cli]
 key = "demo"
@@ -10,12 +10,12 @@ help = "Echo message"
 args = [
   {key="message", mult="*", type="str"}
 ]
-entrypoint = "cli_def.demo_handlers:echo"
+entrypoint = "cli_def.demo.handlers:echo"
 
 [cli.greet]
 help = "Greet someone"
 args = [
   {key="name", mult="?", type="str"},
-  {key="upper", option="--upper", is_flag=true}
+  {key="upper", option="--upper", aliases=["-U"], is_flag=true}
 ]
-entrypoint = "cli_def.demo_handlers:greet"
+entrypoint = "cli_def.demo.handlers:greet"

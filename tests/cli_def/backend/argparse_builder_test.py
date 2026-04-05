@@ -48,8 +48,9 @@ def subcommand_w_template_cli_def_path() -> str:
 def test_argparse_builder_hello_world(hello_world_cli_def_path):
     parser = CliDefParser()
     cliDef = parser.parse_from_toml(hello_world_cli_def_path)
+    assert cliDef is not None
     builder = ArgparseBuilder()
-    arg_parser = builder.build_argparse(cliDef)
+    arg_parser = builder.build(cliDef)
 
     parsed = arg_parser.parse_args(["John"])
     assert "John" in parsed.your_name
@@ -60,7 +61,7 @@ def test_argparse_builder_minimum(minimum_cli_def_path):
     cliDef = parser.parse_from_toml(minimum_cli_def_path)
     assert cliDef is not None
     builder = ArgparseBuilder()
-    arg_parser = builder.build_argparse(cliDef)
+    arg_parser = builder.build(cliDef)
     assert arg_parser is not None
 
     for node in cliDef.iter_all_nodes():
@@ -76,7 +77,7 @@ def test_cli_def_parser_simple(simple_cli_def_path):
     cliDef = parser.parse_from_toml(simple_cli_def_path)
     assert cliDef is not None
     builder = ArgparseBuilder()
-    arg_parser = builder.build_argparse(cliDef)
+    arg_parser = builder.build(cliDef)
     assert arg_parser is not None
 
     for node in cliDef.iter_all_nodes():
@@ -124,7 +125,7 @@ def test_argparse_builder_command(command_cli_def_path):
     cliDef = parser.parse_from_toml(command_cli_def_path)
     assert cliDef is not None
     builder = ArgparseBuilder()
-    arg_parser = builder.build_argparse(cliDef)
+    arg_parser = builder.build(cliDef)
     assert arg_parser is not None
 
     for node in cliDef.iter_all_nodes():
@@ -156,7 +157,7 @@ def test_argparse_builder_command_w_template(command_w_template_cli_def_path):
     cliDef = parser.parse_from_toml(command_w_template_cli_def_path)
     assert cliDef is not None
     builder = ArgparseBuilder()
-    arg_parser = builder.build_argparse(cliDef)
+    arg_parser = builder.build(cliDef)
     assert arg_parser is not None
 
     for node in cliDef.iter_all_nodes():
@@ -200,7 +201,7 @@ def test_argparse_builder_subcommand(subcommand_cli_def_path):
     cliDef = parser.parse_from_toml(subcommand_cli_def_path)
     assert cliDef is not None
     builder = ArgparseBuilder()
-    arg_parser = builder.build_argparse(cliDef)
+    arg_parser = builder.build(cliDef)
     assert arg_parser is not None
 
     for node in cliDef.iter_all_nodes():
@@ -227,7 +228,7 @@ def test_argparse_builder_subcommand_w_template(subcommand_w_template_cli_def_pa
     cliDef = parser.parse_from_toml(subcommand_w_template_cli_def_path)
     assert cliDef is not None
     builder = ArgparseBuilder()
-    arg_parser = builder.build_argparse(cliDef)
+    arg_parser = builder.build(cliDef)
     assert arg_parser is not None
 
     for node in cliDef.iter_all_nodes():

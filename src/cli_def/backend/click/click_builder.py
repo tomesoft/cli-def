@@ -23,29 +23,41 @@ ClickObject = Union[
     click.Option,
 ]
 
-class ClickBuilder:
+GroupOrCommand = Union[
+    click.Group,
+    click.Command,
+]
+
+from ..protocols import BuilderProtocol
+
+
+class ClickBuilder(BuilderProtocol):
 
     def __init__(self):
         self._defpath_mapping: dict[str, ClickObject] = {}
+
 
     @property
     def defpath_mapping(self) -> Mapping[str, ClickObject]:
         return self._defpath_mapping
 
+
+    def build(self, cliDef: CliDef) -> GroupOrCommand:
+        return self.build_click(cliDef)
+
+
     def _register(self, node, obj):
         self._defpath_mapping[node.defpath] = obj
 
 
-    def build_click(self, cliDef: CliDef) -> click.Group | click.Command:
-
+    def build_click(self, cliDef: CliDef) -> GroupOrCommand:
         if not cliDef.commands:
             return self._build_root_command(cliDef)
 
         return self._build_root_group(cliDef)
 
 
-    def _build_root_command(self, cliDef: CliDef):
-
+    def _build_root_command(self, cliDef: CliDef) -> click.Command:
         params = [self._build_param(arg) for arg in cliDef.arguments]
 
         def callback(**kwargs):
@@ -83,7 +95,6 @@ class ClickBuilder:
 
 
     def _build_command(self, cmdDef: CommandDef) -> click.Command:
-
         params = [self._build_param(arg) for arg in cmdDef.arguments]
         # collect arguments from template
         for tmpl_cmd in cmdDef.get_templates():
@@ -120,8 +131,7 @@ class ClickBuilder:
         return cmd
 
 
-    def _build_param(self, arg: ArgumentDef):
-
+    def _build_param(self, arg: ArgumentDef) -> click.Parameter:
         if arg.option:
             # option
             param = click.Option(
@@ -145,35 +155,25 @@ class ClickBuilder:
         return param
 
 
-    def _attach_commands(self, parent, commands: Iterable[CommandDef]):
+    def _attach_commands(
+            self,
+            parent: click.Group,
+            commands: Iterable[CommandDef]
+        ):
         for cmd in commands or []:
             parent.add_command(self._build_command(cmd))
 
 
-    def _attach_params(self, cmd, arguments):
+    def _attach_params(
+            self,
+            cmd: click.Command,
+            arguments: Iterable[ArgumentDef]
+        ):
         for arg in arguments or []:
             cmd.params.append(self._build_param(arg))
 
-    # def to_nargs(self, mult: MultDef) -> str | int | None:
-    #     if mult is None:
-    #         return None
 
-    #     if mult.is_fixed: # lower == upper
-    #         return mult.lower
-
-    #     if mult.is_optional:
-    #         return "?"
-
-    #     if mult.is_unbounded:
-    #         if mult.lower == 0:
-    #             return "*"
-    #         elif mult.lower == 1:
-    #             return "+"
-        
-    #     return f"{mult.lower}..{mult.upper}"
-
-
-    def apply_mult(self, param, mult: MultDef):
+    def apply_mult(self, param: click.Parameter, mult: MultDef):
         if mult.is_fixed:
             param.nargs = mult.lower
         elif mult.is_unbounded:

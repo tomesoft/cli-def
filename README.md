@@ -52,7 +52,7 @@ Try the interactive demo:
 cli-def demo beginner
 ```
 
-`beginner` profile reads in [beginner.toml](./src/cli_def/resources/demo/beginner.toml)
+`beginner` profile reads in [beginner.toml](./src/cli_def/demo/profiles/beginner.toml)
 
 ```text
 Type 'help' to list commands, 'exit' to exit
@@ -72,7 +72,7 @@ Advanced demo:
 cli-def demo advanced
 ```
 
-`advanced` profile reads in [advanced.toml](./src/cli_def/resources/demo/advanced.toml)
+`advanced` profile reads in [advanced.toml](./src/cli_def/demo/profiles/advanced.toml)
 
 ---
 
@@ -98,14 +98,14 @@ cli-def repl
 then for example, run `scan` command in REPL;
 
 ```text
-cli-def> scan cli_def.script.handlers2
-package_name: cli_def.script.handlers2
-/cli-def/testA:
-    cli_def.script.handlers2:dummyA, desc='late binding testA', late_bindings=True
-/cli-def/testB:
-    cli_def.script.handlers2:dummyB, desc='late binding testB', late_bindings=True
-/cli-def/testC:
-    cli_def.script.handlers2:dummyC, desc='late binding testC', late_bindings=True
+cli-def> scan cli_def.script.handlers.dummy2
+package_name: cli_def.script.handlers.dummy2
+#  defpath         entrypoint                             desc              
+----------------------------------------------------------------------------
+1  /cli-def/testA  cli_def.script.handlers.dummy2:dummyA  late binding testA
+2  /cli-def/testB  cli_def.script.handlers.dummy2:dummyB  late binding testB
+3  /cli-def/testC  cli_def.script.handlers.dummy2:dummyC  late binding testC
+----------------------------------------------------------------------------
 
 -> out[0]
 ```
@@ -128,7 +128,7 @@ cli-def>eval>> [k for k in _]
 cli-def>eval>> _["/cli-def/testA"]
 [{'description': 'late binding testA',
   'entrypoint': 'cli_def.script.handlers2:dummyA',
-  'late_bindings': True,
+  'late_binding': True,
   'module': 'cli_def.script.handlers2',
   'name': 'dummyA',
   'path': '/cli-def/testA',
@@ -261,7 +261,7 @@ parser = CliDefParser()
 cli_def = parser.parse_from_toml("cli_def.toml")
 
 builder = ArgparseBuilder()
-argparser = builder.build_argparse(cli_def)
+argparser = builder.build(cli_def)
 
 # if you'd like to tune the argparser, you can access to specific part using defpath
 # part: ArgumentParser = builder.mapping["/MyCLI/hello"]

@@ -10,7 +10,7 @@ from .event import CliEvent
 
 @dataclass
 class CliResult:
-    results: list[HandlerResult]
+    results: list[CliHandlerResult]
     exit_code: int = 0
 
     def all_data(self) -> list[Any]:
@@ -20,7 +20,7 @@ class CliResult:
         ]
 
 
-class ResultKind(Enum):
+class CliHandlerResultKind(Enum):
     OK = auto()
     FAILED = auto()
 
@@ -29,14 +29,14 @@ class ResultKind(Enum):
 
 
 @dataclass
-class HandlerResult:
+class CliHandlerResult:
     defpath: str
-    kind: ResultKind = ResultKind.OK
+    kind: CliHandlerResultKind = CliHandlerResultKind.OK
     data: Any = None
     message: Optional[str] = None
 
     @classmethod
-    def make_result(cls, event: CliEvent, message: str|None = None, data: Any = None, kind: ResultKind = ResultKind.OK) -> "HandlerResult":
+    def make_result(cls, event: CliEvent, message: str|None = None, data: Any = None, kind: CliHandlerResultKind = CliHandlerResultKind.OK) -> "CliHandlerResult":
         return cls(
             defpath=event.command.defpath,
             kind=kind,
@@ -45,10 +45,10 @@ class HandlerResult:
         )
 
     @classmethod
-    def make_error(cls, event: CliEvent, message: str|None = None, data: Any = None) -> "HandlerResult":
+    def make_error(cls, event: CliEvent, message: str|None = None, data: Any = None) -> "CliHandlerResult":
         return cls(
             defpath=event.command.defpath,
-            kind=ResultKind.FAILED,
+            kind=CliHandlerResultKind.FAILED,
             data=data,
             message=message
         )
@@ -64,7 +64,7 @@ class HandlerResult:
 
 class ResultStore:
     def __init__(self):
-        self._results: list[HandlerResult] = []
+        self._results: list[CliHandlerResult] = []
 
     def add(self, result):
         self._results.append(result)
@@ -90,7 +90,7 @@ class ResultStore:
 
 # view object used in repl
 class ResultView:
-    def __init__(self, result: HandlerResult):
+    def __init__(self, result: CliHandlerResult):
         self._r = result
 
     def __getitem__(self, key):

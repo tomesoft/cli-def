@@ -6,8 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body {
-      font-family: sans-serif;
-      max-width: 700px;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      max-width: 800px;
       margin: 40px auto;
       line-height: 1.6;
     }
@@ -15,20 +15,66 @@
       border-bottom: 1px solid #ddd;
       padding-bottom: 10px;
     }
-    a {
-      color: #0366d6;
-      text-decoration: none;
+    pre {
+      background: #f6f8fa;
+      padding: 12px;
+      border-radius: 6px;
+      overflow-x: auto;
+    }
+    code {
+      font-family: monospace;
+    }
+    .section {
+      margin-top: 30px;
     }
   </style>
 </head>
 <body>
+
   <h1>cli-def</h1>
-  <p>A declarative DSL for defining CLI structures with a unified runtime and REPL.</p>
 
   <p>
+    A declarative DSL for defining and running composable CLI applications.
+  </p>
+
+  <div class="section">
+    <h2>Example</h2>
+
+<pre><code>[cli]
+key = "Your CLI"
+help = "New approach to defining your CLI"
+
+[cli.hello]
+help = "Hello, Someone"
+args = [
+    {key="someone", mult="1", type="str"}
+]
+</code></pre>
+
+  </div>
+
+  <div class="section">
+    <h2>Run</h2>
+
+<pre><code>$ cli-def run example.toml -- hello World
+</code></pre>
+
+  </div>
+
+  <div class="section">
+    <h2>REPL</h2>
+
+<pre><code>$ cli-def repl --file example.toml
+cli-def> hello World
+</code></pre>
+
+  </div>
+
+  <div class="section">
     <a href="https://github.com/tomesoft/cli-def">
       View on GitHub
     </a>
-  </p>
+  </div>
+
 </body>
 </html>

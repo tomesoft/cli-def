@@ -8,50 +8,119 @@ help = "CliDef Script"
 args = [
     {key="verbose", option="--verbose", aliases=["-v"], is_flag=true, default=false},
     {key="debug", option="--debug", aliases=["-d"], is_flag=true, default=false},
-    {key="backend", option="--backend", type="str", choices=["argparse", "click"], default="argparse", help="Choose backend"},
+    {key="backend", option="--backend", type="str", choices=["argparse", "click"]},
 ]
 
-[cli._shared]
+
+# --------------------------------------------------------------------------------
+# demo command
+# --------------------------------------------------------------------------------
+[cli.demo]
+help = "Demo"
 args = [
-    # {key="verify", option="--verify", is_flag=true, default=false},
+    {key="profile", mult="?", type="str"}
 ]
+entrypoint = "cli_def.demo.handlers:run_demo"
 
+# --------------------------------------------------------------------------------
+# dump command
+# --------------------------------------------------------------------------------
+[cli.dump]
+help = "Dump cli-def AST"
+args = [
+    {key="cli_def_file", mult="1", type="str"},
+    #{key="check_entrypoints", option="--check", is_flag=true, default=false},
+]
+entrypoint = "cli_def.script.handlers.dump:run_dump"
+
+# --------------------------------------------------------------------------------
+# run command
+# --------------------------------------------------------------------------------
+[cli.run]
+help = "Run CLI"
+args = [
+    {key="cli_def_file", mult="1", type="str"},
+    {key="no_ctx_propagate", option="--no-ctx-propagate", is_flag=true, default=false},
+]
+entrypoint = "cli_def.script.handlers.run:run_run"
+
+# --------------------------------------------------------------------------------
+# repl command
+# --------------------------------------------------------------------------------
 [cli.repl]
 help = "Interactive Mode"
 args = [
     {key="cli_def_file", option="--file", mult="?", type="str"},
     {key="no_ctx_propagate", option="--no-ctx-propagate", is_flag=true, default=false},
 ]
-#"entrypoint"="cli_def.script.handlers:run_repl" # use decorator binding instead
+entrypoint = "cli_def.script.handlers.repl:run_repl"
 
-[cli.demo]
-help = "Demo"
-args = [
-    {key="profile", mult="?", type="str"}
-]
-#"entrypoint"="cli_def.script.handlers:run_demo" # use decorator binding instead
-
-[cli.run]
-help = "Run"
-args = [
-    {key="cli_def_file", mult="?", type="str"},
-    {key="no_ctx_propagate", option="--no-ctx-propagate", is_flag=true, default=false},
-]
-entrypoint = "cli_def.script.handlers:run_run"
-
-[cli.dump]
-help = "Dump cli-def AST"
-args = [
-    {key="cli_def_file", mult="1", type="str"}
-]
-entrypoint = "cli_def.script.handlers:run_dump"
-
+# --------------------------------------------------------------------------------
+# scan command
+# --------------------------------------------------------------------------------
 [cli.scan]
 help = "Scan late-binding handlers"
-args = [
-    {key="package", mult="?", type="str"},
-    {key="show_all", option="--all", is_flag=true, default=false},
-    {key="recursive", option="--recursive", aliases=["-R"], is_flag=true, default=false},
-    {key="no_subprocess", option="--no-subprocess", aliases=["-N"], is_flag=true, default=false},
-    {key="check_toml_path", option="--check", mult="?", type="str"},
-]
+entrypoint = "cli_def.script.handlers.scan:run_scan"
+
+[[cli.scan.args]]
+key = "package"
+mult = "?"
+type = "str"
+
+[[cli.scan.args]]
+key = "show_early"
+option = "--show-early"
+is_flag = true
+default = false
+help = "Show not only late-bindings but early-bindings"
+
+[[cli.scan.args]]
+key = "recursive"
+option = "--recursive"
+aliases = ["-R"]
+is_flag = true
+default = false
+help = "Recursive scan in the specified package"
+
+[[cli.scan.args]]
+key = "no_subprocess"
+option = "--no_subprocess"
+aliases = ["-N"]
+is_flag = true
+default = false
+help = "Package loding will be done in current process instead of subprocess"
+
+[[cli.scan.args]]
+key = "check_toml_path"
+option = "--check"
+mult = "1"
+type = "str"
+help = "Check whether each handler is bound to the entrypoint or not in TOML"
+
+# --------------------------------------------------------------------------------
+# search command
+# --------------------------------------------------------------------------------
+[cli.search]
+help = "Search cli-def TOMLs in specified directory"
+entrypoint = "cli_def.script.handlers.search:run_search"
+
+[[cli.search.args]]
+key = "directory_to_search"
+mult = "1"
+type = "str"
+
+[[cli.search.args]]
+key = "recursive"
+option = "--recursive"
+aliases = ["-R"]
+is_flag = true
+default = false
+help = "Recursive search in the specified directory"
+
+[[cli.search.args]]
+key = "dump_all"
+option = "--dump-all"
+aliases = ["-D"]
+is_flag = true
+default = false
+help = "dump each cli-def"

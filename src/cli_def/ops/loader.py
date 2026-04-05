@@ -1,33 +1,50 @@
 # cli_def/ops/loader.py
 from __future__ import annotations
 
-from typing import Mapping, Any
+from typing import Mapping, Any, Union
 from pathlib import Path
 import logging
 import tomllib
+
+from typing import Union
+from pathlib import Path
+
+PathLike = Union[str, Path]
 
 from ..models import CliDef
 from ..parsers import CliDefParser
 
 
-def load_toml_beside(here: Path, toml_file: str) -> Mapping[str, Any]:
+def load_toml_beside(
+        here: Path,
+        *path_parts: PathLike
+    ) -> Mapping[str, Any]:
     """
-    Typical usage: load_toml_beside(Path(__file__), "cli_def.toml")
+    Usage:
+        load_toml_beside(Path(__file__), "cli_def.toml")
+        load_toml_beside(Path(__file__), "resources", "cli_def.toml")
     """
-    toml_path = here.resolve().parent / toml_file
+    base = here.resolve().parent
+    toml_path = base.joinpath(*path_parts)
     with toml_path.open("rb") as f:
         return tomllib.load(f)
 
 
-def load_cli_def_beside(here: Path, toml_file: str) -> CliDef|None:
+def load_cli_def_beside(
+        here: Path,
+        *path_parts: PathLike
+    ) -> CliDef | None:
     """
-    Typical usage: load_cli_def_beside(Path(__file__), "cli_def.toml")
+    Usage:
+        load_cli_def_beside(Path(__file__), "cli_def.toml")
+        load_cli_def_beside(Path(__file__), "profiles", f"{profile}.toml")
     """
-    toml_path = here.resolve().parent / toml_file
+    base = here.resolve().parent
+    toml_path = base.joinpath(*path_parts)
     return load_cli_def_path(toml_path)
 
 
-def load_cli_def_path(path_to_toml: str|Path) -> CliDef|None:
+def load_cli_def_path(path_to_toml: PathLike) -> CliDef | None:
     if path_to_toml is None:
         return None
     if not Path(path_to_toml).exists():

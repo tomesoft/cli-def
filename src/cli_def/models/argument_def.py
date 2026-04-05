@@ -1,6 +1,6 @@
 # cli_def/model.py
 from __future__ import annotations
-from typing import Optional, Any, Iterator, Mapping
+from typing import Any, Iterator, Mapping
 from dataclasses import dataclass, field
 
 from .abstract_node import CliDefNode
@@ -18,15 +18,19 @@ class ArgumentDef(CliDefNode):
     option: str|None = None # "--<option>"
     aliases: list[str]|None = None
     type: str|None = None
-    mult: MultDef = field(default_factory=lambda: MultDef(1, 1))
+    mult: MultDef|None = None
     choices: list[Any]|None = None
     default: Any|None = None
     help: str|None = None
     is_flag: bool|None = None
 
+
     def __post_init__(self):
         if self.mult is None:
-            self.mult = MultDef(1, 1)
+            if self.is_flag:
+                self.mult = MultDef(0, 1)
+            else:
+                self.mult = MultDef(1, 1)
 
         elif isinstance(self.mult, str):
             self.mult = MultDef.from_str(self.mult)
@@ -40,9 +44,11 @@ class ArgumentDef(CliDefNode):
             if self.type is None:
                 self.type = "bool"
 
+
     @property
     def is_positional(self) -> bool:
         return self.option is None
+
 
     @classmethod
     def from_mapping(cls, mapping: Mapping[str, Any]) -> ArgumentDef:

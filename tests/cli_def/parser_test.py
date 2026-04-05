@@ -91,7 +91,7 @@ def test_cli_def_parser_simple(simple_cli_def_path):
     assert argdef2.key == "flag_option"
     assert argdef2.defpath == "/MyCLI/flag_option"
     assert argdef2.option == "--flag"
-    assert argdef2.mult == MultDef(1, 1)
+    assert argdef2.mult == MultDef(0, 1)
     assert argdef2.type == "bool"
     assert argdef2.is_flag
     # assert len(argdef2.extra_defs) == 1

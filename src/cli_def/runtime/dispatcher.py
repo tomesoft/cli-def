@@ -13,16 +13,16 @@ from ..models import (
     MultDef,
 )
 
-from .handlers import get_registered_handler
+from .handler_support import get_registered_handler
 from .context import CliRuntimeContext
-from .result import HandlerResult
+from .result import CliHandlerResult
 
 # --------------------------------------------------------------------------------
 # Dispatcher class
 # --------------------------------------------------------------------------------
 class CliDispatcher:
 
-    def __init__(self, cli_def: CliDef, fallback_handler: Callable[[CliEvent], HandlerResult|None]|Any = None):
+    def __init__(self, cli_def: CliDef, fallback_handler: Callable[[CliEvent], CliHandlerResult|None]|Any = None):
         self.cli_def : CliDef = cli_def
         self.fallback_handler : Callable[[CliEvent], Any] = fallback_handler or type(self)._default_fallback_handler
         self._handler_cache: dict[str, Callable] = {}
@@ -76,7 +76,7 @@ class CliDispatcher:
             raise RuntimeError(f"Command not found from defpath: [{defpath}]")
         assert isinstance(command, CommandDef)
         params = self._normalize(command, dict(kwargs))
-        event = CliEvent(
+        event = CliEvent.create(
             path=defpath,
             command=command,
             params=params,
@@ -184,14 +184,14 @@ class CliDispatcher:
         return func
 
 
-    def normalize_result(self, result: Any, event: CliEvent) -> HandlerResult:
+    def normalize_result(self, result: Any, event: CliEvent) -> CliHandlerResult:
         if result is None:
-            return HandlerResult(defpath=event.command.defpath)
+            return CliHandlerResult(defpath=event.command.defpath)
 
-        if isinstance(result, HandlerResult):
+        if isinstance(result, CliHandlerResult):
             return result
 
-        return HandlerResult(
+        return CliHandlerResult(
             defpath=event.command.defpath,
             data=result
         )

@@ -20,23 +20,31 @@ ArgparseNode = Union[
     argparse.Action,
 ]
 
-class ArgparseBuilder:
+from ..protocols import BuilderProtocol
+
+
+class ArgparseBuilder(BuilderProtocol):
 
     def __init__(self):
         self._defpath_mapping: dict[str, ArgparseNode] = {}
         self._early_parser = None
 
+    @property
+    def defpath_mapping(self) -> Mapping[str, ArgparseNode]:
+        return self._defpath_mapping
+
+
+    def build(self, cliDef: CliDef) -> argparse.ArgumentParser:
+        return self.build_argparse(cliDef)
+
+
     def _register(self, node: CliDefNode, obj: Any):
         self._defpath_mapping[node.defpath] = obj
+
 
     def _register_subparsers(self, node: CliDefNode, obj: Any):
         special_defpath = "/".join([node.defpath, "__subparsers__"])
         self._defpath_mapping[special_defpath] = obj
-
-
-    @property
-    def defpath_mapping(self) -> Mapping[str, ArgparseNode]:
-        return self._defpath_mapping
 
 
     def build_early_argparse(self, cliDef: CliDef, prog: str|None = None) -> argparse.ArgumentParser|None:
@@ -94,11 +102,10 @@ class ArgparseBuilder:
                     name_or_flags.extend(argDef.aliases)
                 name_or_flags.append(argDef.option or argDef.key)
                 action = parser.add_argument(
-                    #argDef.option or argDef.key,
                     *name_or_flags,
                     dest=argDef.get_dest(),
                     help=argDef.help,
-                    action=argDef.get_action(),
+                    action=argDef.get_action() or "",
                 )
             else: # option parameter
                 name_or_flags = []
@@ -106,7 +113,6 @@ class ArgparseBuilder:
                     name_or_flags.extend(argDef.aliases)
                 name_or_flags.append(argDef.option)
                 action = parser.add_argument(
-                    #argDef.option,
                     *name_or_flags,
                     dest=argDef.get_dest(),
                     choices=argDef.choices,
@@ -174,8 +180,8 @@ class ArgparseBuilder:
             self,
             cmdDef: CommandDef,
             subparsers: argparse._SubParsersAction|None = None,
-            parent_parsers: list[argparse.ArgumentParser]|None = None
-            ) -> Any:
+            parent_parsers: Sequence[argparse.ArgumentParser]|None = None
+            ) -> argparse.ArgumentParser:
         if parent_parsers is None:
             parent_parsers = []
         if subparsers is not None:
@@ -203,11 +209,13 @@ class ArgparseBuilder:
 
         return parser
 
+
     def _attach_metadata(self, parser, command: CommandDef|CliDef, path):
         parser.set_defaults(
             _path=path,
             _command=command,   # ← これも入れる（重要）
         )
+
 
     def to_nargs(self, mult: MultDef) -> str | int | None:
         if mult is None:

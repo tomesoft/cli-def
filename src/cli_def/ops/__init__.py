@@ -2,7 +2,7 @@
 # package marker
 
 from .dumper import (
-    dump_cli_def_pretty
+    CliDefDumper
 )
 from .loader import (
     load_cli_def_beside,
@@ -10,7 +10,7 @@ from .loader import (
 )
 
 __all__ = [
-    "dump_cli_def_pretty",
+    "CliDefDumper",
     "load_cli_def_beside",
     "load_cli_def_path",
 ]

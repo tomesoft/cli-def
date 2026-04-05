@@ -14,8 +14,9 @@ from ..models import CliDef
 from ..parsers import CliDefParser
 from .runner import CliRunner
 from .context import CliRuntimeContext
-from .result import ResultStore, ResultView, HandlerResult
+from .result import ResultStore, ResultView, CliHandlerResult
 from .event import CliEvent
+
 
 # --------------------------------------------------------------------------------
 # CliSession protocol
@@ -67,14 +68,14 @@ class CliSession(CliSessionProtocol):
     def __init__(
             self,
             cli_def: CliDef,
-            fallback_handler: Callable[[CliEvent], HandlerResult|None]|None = None,
+            fallback_handler: Callable[[CliEvent], CliHandlerResult|None]|None = None,
             profile: str|None = None,
             cli_def_file: str|None = None,
             *,
             ctx: CliRuntimeContext|None = None,
             ):
         self.cli_def: CliDef = cli_def
-        self.fallback_handler: Callable[[CliEvent], HandlerResult|None]|None = fallback_handler
+        self.fallback_handler: Callable[[CliEvent], CliHandlerResult|None]|None = fallback_handler
         self.profile = profile
         self._cli_def_file = cli_def_file
         self.runtime_ctx = ctx

@@ -8,15 +8,15 @@ import logging
 
 from ..models import CliDef
 from ..backend.argparse import ArgparseBuilder
-from ..ops import dump_cli_def_pretty
+from ..ops import CliDefDumper
 
 
 from .dispatcher import CliDispatcher
 from .context import CliRuntimeContext
 from .event import CliEvent
 from .result import (
-    HandlerResult,
-    ResultKind,
+    CliHandlerResult,
+    CliHandlerResultKind,
     CliResult,
 )
 from .utils import (
@@ -31,7 +31,7 @@ class CliRunner:
     def __init__(
             self,
             cli_def: CliDef,
-            fallback_handler: Callable[[CliEvent], HandlerResult|None]|None = None,
+            fallback_handler: Callable[[CliEvent], CliHandlerResult|None]|None = None,
             *,
             default_backend: str="argparse",
             default_ctx: CliRuntimeContext|None = None,
@@ -70,9 +70,9 @@ class CliRunner:
         return self._normalize_result([handler_result])
 
 
-    def compute_exit_code(self, results: Iterable[HandlerResult]):
+    def compute_exit_code(self, results: Iterable[CliHandlerResult]):
         for r in results:
-            if r.kind == ResultKind.FAILED:
+            if r.kind == CliHandlerResultKind.FAILED:
                 return 1
         return 0
 
@@ -117,7 +117,7 @@ class CliRunner:
 
 
     def _show_help(self):
-        dump_cli_def_pretty(self.cli_def, as_help=True)
+        CliDefDumper.dump_pretty(self.cli_def, as_help=True)
 
 
     def _determine_backend(self) -> str:
@@ -139,7 +139,7 @@ class CliRunner:
         builder = self.builder
         if builder is None:
             builder = ArgparseBuilder()
-        parser = builder.build_argparse(self.cli_def)
+        parser = builder.build(self.cli_def)
         args, remaining = parser.parse_known_args(args=argv)
         return self.dispatcher.dispatch(args, remaining, ctx=self.ctx)
 
@@ -148,10 +148,10 @@ class CliRunner:
         import click
         from ..backend.click import ClickBuilder, ClickBinder
         builder = ClickBuilder()
-        root = builder.build_click(self.cli_def)
+        root = builder.build(self.cli_def)
 
         binder = ClickBinder(dispatcher=self.dispatcher, ctx=self.ctx)
-        binder.bind(root, builder.defpath_mapping)
+        binder.bind(builder.defpath_mapping)
 
         try:
             result = root(
@@ -169,7 +169,7 @@ class CliRunner:
             e.show()
             return e.exit_code
 
-    def _normalize_result(self, results: Iterable[HandlerResult]) -> CliResult:
+    def _normalize_result(self, results: Iterable[CliHandlerResult]) -> CliResult:
         exit_code = self.compute_exit_code(results)
         result = CliResult(
             exit_code=exit_code,

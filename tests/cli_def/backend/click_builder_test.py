@@ -62,7 +62,7 @@ def test_click_builder_hello_world(hello_world_cli_def_path):
     cliDef = parser.parse_from_toml(hello_world_cli_def_path)
     assert cliDef is not None
     builder = ClickBuilder()
-    cli = builder.build_click(cliDef)
+    cli = builder.build(cliDef)
     assert cli is not None
 
     runner = CliRunner()
@@ -77,7 +77,7 @@ def test_click_builder_minimum(minimum_cli_def_path):
     cliDef = parser.parse_from_toml(minimum_cli_def_path)
     assert cliDef is not None
     builder = ClickBuilder()
-    cli = builder.build_click(cliDef)
+    cli = builder.build(cliDef)
     assert cli is not None
 
     for node in cliDef.iter_all_nodes():
@@ -103,7 +103,7 @@ def test_click_builder_simple(simple_cli_def_path):
     cliDef = parser.parse_from_toml(simple_cli_def_path)
     assert cliDef is not None
     builder = ClickBuilder()
-    cli = builder.build_click(cliDef)
+    cli = builder.build(cliDef)
     assert cli is not None
 
     for node in cliDef.iter_all_nodes():
@@ -148,7 +148,7 @@ def test_click_builder_command(command_cli_def_path):
     cliDef = parser.parse_from_toml(command_cli_def_path)
     assert cliDef is not None
     builder = ClickBuilder()
-    cli = builder.build_click(cliDef)
+    cli = builder.build(cliDef)
     assert cli is not None
 
     for node in cliDef.iter_all_nodes():
@@ -195,7 +195,7 @@ def test_click_builder_command_w_template(command_w_template_cli_def_path):
     cliDef = parser.parse_from_toml(command_w_template_cli_def_path)
     assert cliDef is not None
     builder = ClickBuilder()
-    cli = builder.build_click(cliDef)
+    cli = builder.build(cliDef)
     assert cli is not None
 
     for node in cliDef.iter_all_nodes():
@@ -251,7 +251,7 @@ def test_arg_parser_subcommand(subcommand_cli_def_path):
     cliDef = parser.parse_from_toml(subcommand_cli_def_path)
     assert cliDef is not None
     builder = ClickBuilder()
-    cli = builder.build_click(cliDef)
+    cli = builder.build(cliDef)
     assert cli is not None
 
     for node in cliDef.iter_all_nodes():
@@ -278,7 +278,7 @@ def test_arg_parser_subcommand_w_template(subcommand_w_template_cli_def_path):
     cliDef = parser.parse_from_toml(subcommand_w_template_cli_def_path)
     assert cliDef is not None
     builder = ClickBuilder()
-    cli = builder.build_click(cliDef)
+    cli = builder.build(cliDef)
     assert cli is not None
 
     for node in cliDef.iter_all_nodes():

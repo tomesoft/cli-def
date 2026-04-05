@@ -1,5 +1,5 @@
 # cli_def/backend/click/click_binder.py
-from typing import Any, Mapping, Optional
+from typing import Any, Mapping
 import logging
 
 try:
@@ -14,14 +14,22 @@ from ...runtime import (
     CliRuntimeContext,
 )
 
-class ClickBinder:
+from ..protocols import BinderProtocol
 
-    def __init__(self, dispatcher: CliDispatcher, ctx: Optional[CliRuntimeContext] = None):
+
+class ClickBinder(BinderProtocol):
+
+    def __init__(
+            self,
+            dispatcher: CliDispatcher,
+            ctx: CliRuntimeContext|None = None
+        ):
         self.dispatcher = dispatcher
         self.runtime_ctx = ctx
 
-    def bind(self, root, mapping: Mapping[str, Any]):
-        for defpath, obj in mapping.items():
+
+    def bind(self, defpath_mapping: Mapping[str, object]):
+        for defpath, obj in defpath_mapping.items():
             if isinstance(obj, click.Command):
                 # subcommand を持つGroupは callback を設定しない
                 if isinstance(obj, click.Group):
@@ -29,7 +37,8 @@ class ClickBinder:
                 #print(f"@@@ try to override callback of {defpath}")
                 obj.callback = self._make_callback(defpath)
 
-    def _make_callback(self, defpath):
+
+    def _make_callback(self, defpath: str):
         @click.pass_context
         def callback(ctx, **kwargs):
             logging.info(f"@@@ internal callback called: {defpath} passthrough={ctx.args}")
