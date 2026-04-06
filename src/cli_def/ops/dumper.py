@@ -131,21 +131,34 @@ class CliDefDumper:
             )
         )
 
-        if as_help:
-            # apply column styles
-            for col_key, col in table.column_mapping.items():
+        # apply column styles
+        for col_key, col in table.column_mapping.items():
+            if col_key == "help":
+                col.default_style = Style(
+                    wrap_width=30,
+                ).merge(col.default_style)
+            if col_key == "choices":
+                col.default_style = Style(
+                    wrap_width=20,
+                ).merge(col.default_style)
+            if as_help:
                 if col_key == "option":
                     col.default_style = Style(
                         bold=True,
                         fg_color="green",
                         ).merge(col.default_style)
 
+        if as_help:
             # apply row styles
             for row in table.row_records:
                 if row.get_raw_value("cls", None) == "cmd":
                     key = row.get_raw_value("key", "")
                     if key is not None and not key.strip().startswith("_"):
-                        row.default_style = Style(fg_color="magenta", bold=True)
+                        row.default_style = Style(
+                            fg_color="magenta",
+                            bold=True,
+                            #underline=True,
+                            ).merge(row.default_style)
                 # if row.get_raw_value("cls", None) == "arg":
                 #     row.default_style = Style(fg_color="cyan")
         return table

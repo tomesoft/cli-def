@@ -4,6 +4,9 @@ from __future__ import annotations
 from typing import Protocol, Callable, Any, Sequence, Tuple, Mapping, Union
 from enum import Enum
 from dataclasses import dataclass
+import logging
+
+import shutil
 
 from .renderer import (
     Style,
@@ -101,6 +104,7 @@ NAME_TO_FGCOLOR: dict[str, AnsiCode] = {
     "bright_white"   : AnsiCode.F_BRIGHT_WHITE,
 }
 
+
 NAME_TO_BGCOLOR: dict[str, AnsiCode] = {
     "black"          : AnsiCode.B_BLACK,
     "red"            : AnsiCode.B_RED,
@@ -148,14 +152,14 @@ def decorate_with_ansi(display_text: str, style: Style|None = None) -> PrettyRen
     return PrettyRenderedText(value=display_text)
 
 
-# @dataclass
-# class TableRenderedInfo:
-#     target_table: Table
-#     col_widths: dict[str, int]|None = None
-#     table_width: int|None = None
-#     default_separator: str|None = None
-#     pre_rendered_rows: list[dict[str, Any]]|None = None
+def get_terminal_width(default: int=80) -> int:
+    return shutil.get_terminal_size(fallback=(default, 24)).columns
 
+# --------------------------------------------------------------------------------
+#
+# Pre-rendered Objects
+#
+# --------------------------------------------------------------------------------
 @dataclass
 class PreRenderedTable:
     rows: list[PreRenderedRow]
@@ -164,22 +168,31 @@ class PreRenderedTable:
     default_separator: str|None = None
     source: Table|None = None
 
+
 @dataclass
 class PreRenderedRow:
     cell_mapping: dict[str, PreRenderedCell]
     style: Style|None
     source: RowRecord
 
+
 @dataclass
 class PreRenderedCell:
-    pre_rendered_text: str
+    pre_rendered_segs: list[str]
     style: Style|None
 
 
+
+# --------------------------------------------------------------------------------
+#
+# Pretty Renderer
+#
+# --------------------------------------------------------------------------------
 class PrettyRenderer(BaseRenderer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.use_terminal_width: bool = True
 
 
     def render_value(self, raw_value: Any, style: Style|None = None) -> PrettyRenderedText:
@@ -197,58 +210,20 @@ class PrettyRenderer(BaseRenderer):
         
 
     def _begin_render_table(self, table: Table):
+        if self.use_terminal_width:
+            terminal_width = get_terminal_width()
+            logging.info(f"@@@ terminal_width = {terminal_width}")
         pre_rendered_table = self._pre_render_table(table)
 
+        logging.info(f"@@@ pre_rendered_table_width = {pre_rendered_table.table_width}")
         assert pre_rendered_table.col_widths
-        col_widths: dict[str, int] = pre_rendered_table.col_widths
 
         # store to context
         self.renderer_context.extra["pre_rendered_table"] = pre_rendered_table
 
 
     def _end_render_table(self, table: Table) -> Sequence[PrettyRenderedText]:
-        """Final Rendering"""
-        pre_rendered_table: PreRenderedTable = self.renderer_context.extra["pre_rendered_table"]
-
-        assert pre_rendered_table.default_separator
-        default_h_separator: str = pre_rendered_table.default_separator
-
-        assert pre_rendered_table.col_widths
-        col_widths: dict[str, int] = pre_rendered_table.col_widths
-
-        assert pre_rendered_table.rows
-        pre_rendered_rows: list[PreRenderedRow] = pre_rendered_table.rows
-        rendered_lines: list[PrettyRenderedText] = []
-        for pre_rendered_row in pre_rendered_rows:
-            row: RowRecord = pre_rendered_row.source
-            if row.row_type == RowType.SEPARATOR:
-                rendered_lines.append(PrettyRenderedText(value=default_h_separator))
-                continue
-            pre_rendered_cell_mappings: dict[str, PreRenderedCell] = pre_rendered_row.cell_mapping
-            rendered_cells_and_gaps: list[RenderedTextOrText] = []
-            for i, col_key in enumerate(table.display_column_keys):
-                is_last_cell = i == len(table.display_column_keys)-1
-                col_width = col_widths[col_key]
-                cell = pre_rendered_cell_mappings[col_key]
-                if cell.style and cell.style.h_align == "right":
-                    display_text = cell.pre_rendered_text.rjust(col_width)
-                elif cell.style and cell.style.h_align == "center":
-                    display_text = cell.pre_rendered_text.center(col_width)
-                else:
-                    display_text = cell.pre_rendered_text.ljust(col_width)
-                decorated_text = self._decorate_with_ansi(display_text, cell.style)
-                rendered_cells_and_gaps.append(decorated_text)
-                if not is_last_cell:
-                    gap = cell.style.gap_to_next if cell.style and cell.style.gap_to_next else "  "
-                    if row.default_style:
-                        gap = self._decorate_with_ansi(gap, row.default_style)
-                    rendered_cells_and_gaps.append(gap)
-            rendered_lines.append(
-                PrettyRenderedText(value=
-                    "".join([str(rt) for rt in rendered_cells_and_gaps])
-                )
-            )
-        return rendered_lines
+        return self._post_render_table(table)
 
 
     def _determine_style(self, *styles: Style | None) -> Style | None:
@@ -262,6 +237,15 @@ class PrettyRenderer(BaseRenderer):
         return style
 
 
+    def _calc_cell_width(self, cell: PreRenderedCell) -> int:
+        if cell.pre_rendered_segs:
+            return max([self.calc_width(seg) for seg in cell.pre_rendered_segs])
+        return 0
+
+
+    # --------------------------------------------------------------------------------
+    # Pre Rendering
+    # --------------------------------------------------------------------------------
     def _pre_render_table(self, table: Table) -> PreRenderedTable:
         # 1) collect used columns
         col_widths: dict[str, int] = {}
@@ -289,7 +273,7 @@ class PrettyRenderer(BaseRenderer):
         # 3) calcuate col max widths
         for row in pre_rendered_rows:
             for col_key, cell in row.cell_mapping.items():
-                text_len = self.calc_width(cell.pre_rendered_text)
+                text_len = self._calc_cell_width(cell)
                 col_widths[col_key] = max(col_widths[col_key], text_len)
 
         table_width = self._calculate_table_width(
@@ -315,18 +299,20 @@ class PrettyRenderer(BaseRenderer):
             col_widths: Mapping[str, int],
         ) -> int:
 
-        # sum of display text lengths
-        table_width = sum([
-            col_widths.get(col_key, 0) for col_key in table.display_column_keys
-        ])
-        
-        # plus gaps
-        gaps = [
-            table.column_mapping[col_key].default_style.gap_to_next or "  "
-            for col_key in table.display_column_keys
-        ]
+        text_widths: list[int] = []
+        gaps: list[str] = []
+        for col_key in table.display_column_keys:
+            text_widths.append(col_widths[col_key])
+            style = table.column_mapping[col_key].default_style
+            gaps.append(
+                style.gap_to_next if style and style.gap_to_next is not None else "  "
+            )
 
-        table_width += sum([self.calc_width(gap) for gap in gaps[:-1]])
+        # text widths plus gaps
+        table_width = (
+            sum(text_widths) +
+            sum([self.calc_width(gap) for gap in gaps[:-1]])
+        )
         return table_width
 
 
@@ -349,7 +335,7 @@ class PrettyRenderer(BaseRenderer):
             if row.row_type == RowType.HEADER_KEY:
                 style = self._determine_style(col_style, row_style)
                 display_text = col_key
-                pre_rendered_cell = PreRenderedCell(display_text, style)
+                pre_rendered_cell = PreRenderedCell([display_text], style)
             elif column.col_type == ColumnType.NORMAL:
                 cellOrValue = row.cell_mapping.get(col_key, None) if row.cell_mapping else None
                 pre_rendered_cell = self._pre_render_cell(
@@ -360,15 +346,15 @@ class PrettyRenderer(BaseRenderer):
             elif column.col_type == ColumnType.INDEX0:
                 style = self._determine_style(col_style, row_style)
                 display_text = str(row_index1-1) if row.row_type == RowType.NORMAL else col_key # TODO header
-                pre_rendered_cell = PreRenderedCell(display_text, style)
+                pre_rendered_cell = PreRenderedCell([display_text], style)
             elif column.col_type == ColumnType.INDEX1:
                 style = self._determine_style(col_style, row_style)
                 display_text = str(row_index1) if row.row_type == RowType.NORMAL else col_key # TODO header
-                pre_rendered_cell = PreRenderedCell(display_text, style)
+                pre_rendered_cell = PreRenderedCell([display_text], style)
             elif column.col_type == ColumnType.SEPARATOR:
                 style = self._determine_style(col_style, row_style)
                 display_text = style.v_separator if style and style.v_separator else "|"
-                pre_rendered_cell = PreRenderedCell(display_text, style)
+                pre_rendered_cell = PreRenderedCell([display_text], style)
             else:
                 raise NotImplementedError(f"unexpected column type : {column.col_type}")
             pre_rendered_cell_mapping[col_key] = pre_rendered_cell
@@ -390,19 +376,122 @@ class PrettyRenderer(BaseRenderer):
         if isinstance(cellOrValue, Cell):
             style = self._determine_style(cellOrValue.style, col_style, row_style) # TODO consider order
             display_text = self.make_display_text(cellOrValue.raw_value, style)
-            width = self.calc_width(display_text)
         else:
             style = self._determine_style(col_style, row_style) # TODO consider order
             display_text = self.make_display_text(cellOrValue, style)
-            width = self.calc_width(display_text)
+
+        #pre_rendered_segs: list[str] = []
+        if style and style.wrap_width and style.wrap_width > 0:
+            pre_rendered_segs = self.wrap(display_text, style.wrap_width)
+        else:
+            pre_rendered_segs = [display_text]
 
         return PreRenderedCell(
-            pre_rendered_text=display_text,
+            pre_rendered_segs=pre_rendered_segs,
             style=style
         )
 
 
-    def _decorate_with_ansi(self, display_text: str, style: Style|None = None) -> PrettyRenderedText:
+    # --------------------------------------------------------------------------------
+    # Post Rendering
+    # --------------------------------------------------------------------------------
+    def _post_render_table(self, table: Table) -> Sequence[PrettyRenderedText]:
+        pre_rendered_table: PreRenderedTable = self.renderer_context.extra["pre_rendered_table"]
+
+        assert pre_rendered_table.default_separator
+        default_h_separator: str = pre_rendered_table.default_separator
+
+        assert pre_rendered_table.col_widths
+        col_widths: dict[str, int] = pre_rendered_table.col_widths
+
+        assert pre_rendered_table.rows
+        pre_rendered_rows: list[PreRenderedRow] = pre_rendered_table.rows
+        rendered_lines: list[PrettyRenderedText] = []
+        for pre_rendered_row in pre_rendered_rows:
+            row: RowRecord = pre_rendered_row.source
+            if row.row_type == RowType.SEPARATOR:
+                rendered_lines.append(PrettyRenderedText(value=default_h_separator))
+                continue
+
+            rendered_lines.extend(
+                self._post_render_row(table, pre_rendered_row, col_widths)
+            )
+        return rendered_lines
+
+
+    def _post_render_row(
+            self,
+            table: Table,
+            pre_rendered_row: PreRenderedRow,
+            col_widths: Mapping[str, int],
+        ) -> Sequence[PrettyRenderedText]:
+
+        row: RowRecord = pre_rendered_row.source
+        rendered_lines: list[PrettyRenderedText] = []
+
+        pre_rendered_cell_mappings: dict[str, PreRenderedCell] = pre_rendered_row.cell_mapping
+
+        # 1) determine required sub rows
+        required_sub_rows = max([len(cell.pre_rendered_segs) for _, cell in pre_rendered_row.cell_mapping.items()])
+
+        # 2) render each sub row
+        sub_row_index = 0
+        while sub_row_index < required_sub_rows:
+            rendered_cells_and_gaps: list[RenderedTextOrText] = []
+            for i, col_key in enumerate(table.display_column_keys):
+                is_last_cell = i == len(table.display_column_keys)-1
+                col_width = col_widths[col_key]
+                cell = pre_rendered_cell_mappings[col_key]
+
+                decorated_text = self._post_render_cell(
+                    cell,
+                    col_width,
+                    sub_row_index,
+                )
+
+                rendered_cells_and_gaps.append(decorated_text)
+                if not is_last_cell:
+                    gap = cell.style.gap_to_next if cell.style and cell.style.gap_to_next else "  "
+                    if row.default_style:
+                        gap = self._decorate_with_ansi(gap, row.default_style)
+                    rendered_cells_and_gaps.append(gap)
+
+            rendered_lines.append(
+                PrettyRenderedText(value=
+                    "".join([str(rt) for rt in rendered_cells_and_gaps])
+                )
+            )
+
+            sub_row_index += 1
+
+        return rendered_lines
+
+
+    def _post_render_cell(
+            self,
+            cell: PreRenderedCell,
+            col_width: int,
+            sub_index: int,
+        ) -> PrettyRenderedText:
+        if sub_index < len(cell.pre_rendered_segs):
+            if cell.style and cell.style.h_align == "right":
+                display_text = cell.pre_rendered_segs[sub_index].rjust(col_width)
+            elif cell.style and cell.style.h_align == "center":
+                display_text = cell.pre_rendered_segs[sub_index].center(col_width)
+            else:
+                display_text = cell.pre_rendered_segs[sub_index].ljust(col_width)
+        else:
+            # fill with space
+            display_text = " " * col_width
+        decorated_text = self._decorate_with_ansi(display_text, cell.style)
+
+        return decorated_text
+
+
+    def _decorate_with_ansi(
+            self,
+            display_text: str,
+            style: Style|None = None
+        ) -> PrettyRenderedText:
         return decorate_with_ansi(display_text, style)
 
-    

@@ -5,6 +5,7 @@ from typing import Protocol, Callable, Any, Sequence, Union
 from dataclasses import dataclass, field
 from enum import Enum, auto
 
+import wcwidth
 from wcwidth import wcswidth
 
 
@@ -24,12 +25,16 @@ class Style:
     h_separator:    str|None  = None # default "-"
     gap_to_next:    str|None  = None # default "  "
 
+    wrap_width: int|None = None
+
+
     def make_display_text(self, text: str) -> str:
         if self.prefix:
             text = self.prefix + text
         if self.suffix:
             text = text + self.suffix
         return text
+
 
     def merge(self, other: Style|None) -> Style:
         if other is None:
@@ -46,6 +51,7 @@ class Style:
             v_separator= self.v_separator or other.v_separator,
             h_separator= self.h_separator or other.h_separator,
             gap_to_next= self.gap_to_next or other.gap_to_next,
+            wrap_width= self.wrap_width or other.wrap_width,
         )
 
 
@@ -163,6 +169,10 @@ class BaseRenderer(RendererProtocol):
             return style.make_display_text(display_text)
         return display_text
 
-    
+
     def calc_width(self, display_text: str) -> int:
         return max(wcswidth(display_text), 0) # treat wcswidhth returns < 0
+
+
+    def wrap(self, display_text: str, width: int) -> list[str]:
+        return wcwidth.wrap(display_text, width)
