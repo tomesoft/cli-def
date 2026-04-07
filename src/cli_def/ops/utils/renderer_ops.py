@@ -23,7 +23,10 @@ class TableBuilder:
         cls,
         columns: Iterable[ColumnOrKey],
         row_records: Iterable[RowRecord],
-        display_column_keys: Sequence[str]|None = None,
+        *,
+        display_column_keys: Iterable[str]|None = None,
+        headers: Iterable[CellOrValue]|None = None,
+        footers: Iterable[CellOrValue]|None = None,
     ) -> Table:
 
         columns = cls.normalize_columns(columns)
@@ -35,10 +38,27 @@ class TableBuilder:
         else:
             display_column_keys = list(display_column_keys)
 
+        if headers:
+            header_mapping = {
+                col.key: v for col, v in zip(columns, headers)
+            }
+        else:
+            header_mapping = None
+
+        if footers:
+            footer_mapping = {
+                col.key: v for col, v in zip(columns, footers)
+            }
+        else:
+            footer_mapping = None
+
+
         result = Table(
             column_mapping=column_mapping,
-            display_column_keys=display_column_keys,
             row_records=list(row_records),
+            display_column_keys=display_column_keys,
+            header_mapping=header_mapping,
+            footer_mapping=footer_mapping,
         )
         return result
 
@@ -47,8 +67,11 @@ class TableBuilder:
     def from_columns_and_values(
         cls,
         columns: Iterable[ColumnOrKey],
-        values_seq: Sequence[Sequence[CellOrValue]],
-        display_column_keys: Sequence[str]|None = None,
+        valuess: Iterable[Iterable[CellOrValue]],
+        *,
+        display_column_keys: Iterable[str]|None = None,
+        headers: Iterable[CellOrValue]|None = None,
+        footers: Iterable[CellOrValue]|None = None,
     ) -> Table:
         columns = cls.normalize_columns(columns)
         column_mapping = {
@@ -59,16 +82,32 @@ class TableBuilder:
         else:
             display_column_keys = list(display_column_keys)
 
+        if headers:
+            header_mapping = {
+                col.key: v for col, v in zip(columns, headers)
+            }
+        else:
+            header_mapping = None
+
+        if footers:
+            footer_mapping = {
+                col.key: v for col, v in zip(columns, footers)
+            }
+        else:
+            footer_mapping = None
+
         normal_column_keys = [col.key for col in columns if col.col_type == ColumnType.NORMAL]
         rows: list[RowRecord] = []
-        for values in values_seq:
+        for values in valuess:
             row = cls.make_row(normal_column_keys, values)
             rows.append(row)
 
         result = Table(
             column_mapping=column_mapping,
-            display_column_keys=display_column_keys,
             row_records=rows,
+            display_column_keys=display_column_keys,
+            header_mapping=header_mapping,
+            footer_mapping=footer_mapping,
         )
         return result
 
@@ -107,24 +146,24 @@ class TableBuilder:
         *,
         fillValue: CellOrValue|None = None,
         default_style: Style|None = None,
-        ) -> RowRecord:
+    ) -> RowRecord:
 
-            col_keys = list(col_keys)
-            values = list(values)
+        col_keys = list(col_keys)
+        values = list(values)
 
-            assert len(values) > 0
-            if values[0] == "---":
-                return RowRecord(row_type=RowType.SEPARATOR, default_style=default_style)
+        assert len(values) > 0
+        if values[0] == "---":
+            return RowRecord(row_type=RowType.SEPARATOR, default_style=default_style)
 
-            cell_mapping: dict[str, CellOrValue] = {}
-            for i, col_key in enumerate(col_keys):
-                if i < len(values):
-                    cellOrValue = values[i]
-                else:
-                    cellOrValue = fillValue
-                cell_mapping[col_key] = cellOrValue
-            return RowRecord(
-                cell_mapping=cell_mapping,
-                default_style=default_style
-            )
+        cell_mapping: dict[str, CellOrValue] = {}
+        for i, col_key in enumerate(col_keys):
+            if i < len(values):
+                cellOrValue = values[i]
+            else:
+                cellOrValue = fillValue
+            cell_mapping[col_key] = cellOrValue
+        return RowRecord(
+            cell_mapping=cell_mapping,
+            default_style=default_style
+        )
 

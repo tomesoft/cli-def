@@ -147,8 +147,12 @@ def decorate_with_ansi(display_text: str, style: Style|None = None) -> PrettyRen
             pre.append(ansi)
 
     if pre:
-        deco = "".join([a.value for a in pre]) + display_text + AnsiCode.RESET.value
-        return PrettyRenderedText(value=deco)
+        decorated = (
+            "".join([a.value for a in pre])
+            + display_text
+            + AnsiCode.RESET.value
+        )
+        return PrettyRenderedText(value=decorated)
     return PrettyRenderedText(value=display_text)
 
 
@@ -281,7 +285,7 @@ class PrettyRenderer(BaseRenderer):
             col_widths
         )
 
-        default_separator = "-" * table_width
+        default_separator = Style.DEFAULT_H_SEPARATOR * table_width
 
         pre_rendered_table = PreRenderedTable(
             rows=pre_rendered_rows,
@@ -305,7 +309,9 @@ class PrettyRenderer(BaseRenderer):
             text_widths.append(col_widths[col_key])
             style = table.column_mapping[col_key].default_style
             gaps.append(
-                style.gap_to_next if style and style.gap_to_next is not None else "  "
+                style.gap_to_next
+                if style and style.gap_to_next is not None
+                else Style.DEFAULT_GAP
             )
 
         # text widths plus gaps
@@ -332,10 +338,34 @@ class PrettyRenderer(BaseRenderer):
             col_style = column.default_style # TODO conditional style
 
             pre_rendered_cell = None
-            if row.row_type == RowType.HEADER_KEY:
+            if row.row_type == RowType.HEADER:
+                if table.header_mapping:
+                    cellOrValue = table.header_mapping.get(col_key, "")
+                    pre_rendered_cell = self._pre_render_cell(
+                        cellOrValue,
+                        col_style,
+                        row_style,
+                    )
+                else:
+                    style = self._determine_style(col_style, row_style)
+                    display_text = col_key
+                    pre_rendered_cell = PreRenderedCell([display_text], style)
+            elif row.row_type == RowType.HEADER_KEY:
                 style = self._determine_style(col_style, row_style)
                 display_text = col_key
                 pre_rendered_cell = PreRenderedCell([display_text], style)
+            elif row.row_type == RowType.FOOTER:
+                if table.footer_mapping:
+                    cellOrValue = table.footer_mapping.get(col_key, "")
+                    pre_rendered_cell = self._pre_render_cell(
+                        cellOrValue,
+                        col_style,
+                        row_style,
+                    )
+                else:
+                    style = self._determine_style(col_style, row_style)
+                    display_text = "" # TODO consider default footer value
+                    pre_rendered_cell = PreRenderedCell([display_text], style)
             elif column.col_type == ColumnType.NORMAL:
                 cellOrValue = row.cell_mapping.get(col_key, None) if row.cell_mapping else None
                 pre_rendered_cell = self._pre_render_cell(
@@ -353,7 +383,11 @@ class PrettyRenderer(BaseRenderer):
                 pre_rendered_cell = PreRenderedCell([display_text], style)
             elif column.col_type == ColumnType.SEPARATOR:
                 style = self._determine_style(col_style, row_style)
-                display_text = style.v_separator if style and style.v_separator else "|"
+                display_text = (
+                    style.v_separator
+                    if style and style.v_separator
+                    else Style.DEFAULT_V_SEPARATOR
+                )
                 pre_rendered_cell = PreRenderedCell([display_text], style)
             else:
                 raise NotImplementedError(f"unexpected column type : {column.col_type}")
@@ -432,7 +466,10 @@ class PrettyRenderer(BaseRenderer):
         pre_rendered_cell_mappings: dict[str, PreRenderedCell] = pre_rendered_row.cell_mapping
 
         # 1) determine required sub rows
-        required_sub_rows = max([len(cell.pre_rendered_segs) for _, cell in pre_rendered_row.cell_mapping.items()])
+        required_sub_rows = max([
+            len(cell.pre_rendered_segs)
+            for _, cell in pre_rendered_row.cell_mapping.items()
+        ])
 
         # 2) render each sub row
         sub_row_index = 0
@@ -440,11 +477,13 @@ class PrettyRenderer(BaseRenderer):
             rendered_cells_and_gaps: list[RenderedTextOrText] = []
             for i, col_key in enumerate(table.display_column_keys):
                 is_last_cell = i == len(table.display_column_keys)-1
+                column = table.column_mapping[col_key]
                 col_width = col_widths[col_key]
                 cell = pre_rendered_cell_mappings[col_key]
 
                 decorated_text = self._post_render_cell(
                     cell,
+                    column,
                     col_width,
                     sub_row_index,
                 )
@@ -470,6 +509,7 @@ class PrettyRenderer(BaseRenderer):
     def _post_render_cell(
             self,
             cell: PreRenderedCell,
+            column: Column,
             col_width: int,
             sub_index: int,
         ) -> PrettyRenderedText:
@@ -481,8 +521,14 @@ class PrettyRenderer(BaseRenderer):
             else:
                 display_text = cell.pre_rendered_segs[sub_index].ljust(col_width)
         else:
-            # fill with space
-            display_text = " " * col_width
+            if column.col_type == ColumnType.SEPARATOR:
+                display_text = cell.pre_rendered_segs[0] # from [0] to get pre-rendered separator
+                remain = col_width - len(display_text)
+                if remain:
+                    display_text += " " * remain
+            else:
+                # fill with space
+                display_text = " " * col_width
         decorated_text = self._decorate_with_ansi(display_text, cell.style)
 
         return decorated_text

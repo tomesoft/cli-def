@@ -11,6 +11,11 @@ from wcwidth import wcswidth
 
 @dataclass
 class Style:
+    DEFAULT_GAP = "  "
+    DEFAULT_V_SEPARATOR = "|"
+    DEFAULT_H_SEPARATOR = "-"
+    DEFAULT_TRUNCATE_SYMBOL = "…"
+
     h_align:   str|None  = None # right, left, center
     bold:      bool|None = None
     italic:    bool|None = None
@@ -21,11 +26,14 @@ class Style:
     prefix:    str|None  = None
     suffix:    str|None  = None
 
-    v_separator:    str|None  = None # default "|"
-    h_separator:    str|None  = None # default "-"
-    gap_to_next:    str|None  = None # default "  "
+    v_separator:     str|None  = None # default "|"
+    h_separator:     str|None  = None # default "-"
+    gap_to_next:     str|None  = None # default "  "
 
-    wrap_width: int|None = None
+    wrap_width:      int|None = None
+    truncate_width:  int|None = None
+    truncate_symbol: str|None = None # default "…"
+    truncate_mode:   str|None = None # begin, middle, end
 
 
     def make_display_text(self, text: str) -> str:
@@ -33,6 +41,15 @@ class Style:
             text = self.prefix + text
         if self.suffix:
             text = text + self.suffix
+        if self.truncate_width and len(text) > self.truncate_width:
+            symbol = self.truncate_symbol or self.DEFAULT_TRUNCATE_SYMBOL
+            if self.truncate_mode == "begin":
+                text = symbol + text[len(text) - self.truncate_width:]
+            elif self.truncate_mode == "middle":
+                len_take = self.truncate_width // 2
+                text = text[:len_take] + symbol + text[-len_take:]
+            else: # truncate_mode "end"
+                text = text[:self.truncate_width] + symbol
         return text
 
 
@@ -52,6 +69,9 @@ class Style:
             h_separator= self.h_separator or other.h_separator,
             gap_to_next= self.gap_to_next or other.gap_to_next,
             wrap_width= self.wrap_width or other.wrap_width,
+            truncate_width= self.truncate_width or other.truncate_width,
+            truncate_symbol= self.truncate_symbol or other.truncate_symbol,
+            truncate_mode= self.truncate_mode or other.truncate_mode,
         )
 
 
@@ -127,7 +147,8 @@ class Table:
     column_mapping: dict[str, Column]
     row_records: list[RowRecord]
     display_column_keys: list[str]
-    header_mapping: dict[str, str]|None = None
+    header_mapping: dict[str, CellOrValue]|None = None
+    footer_mapping: dict[str, CellOrValue]|None = None
 
 
 @dataclass

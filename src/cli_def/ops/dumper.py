@@ -10,6 +10,7 @@ from .utils.renderer import (
     Style,
     RowRecord,
     RowType,
+    Cell,
     Table,
 )
 
@@ -76,8 +77,11 @@ class CliDefDumper:
                 elif col_key == cls.COL_CLS:
                     cell = cls.to_short_cls(type(node))
                 elif col_key == cls.COL_MULT:
-                    mult: MultDef|None = getattr(node, "mult", None)
-                    cell = mult.to_str() if mult else None
+                    if getattr(node, "is_flag", None):
+                        cell = None
+                    else:
+                        mult: MultDef|None = getattr(node, "mult", None)
+                        cell = mult.to_str() if mult else None
                 elif col_key == cls.COL_OPTION:
                     if opt := getattr(node, "option", None):
                         if aliases := getattr(node, "aliases", []):
@@ -91,6 +95,12 @@ class CliDefDumper:
                         cell = "flag"
                     else:
                         cell = getattr(node, "type", None)
+                elif col_key == cls.COL_CHOICES:
+                    choices = getattr(node, "choices", None)
+                    if choices:
+                        cell = f"[{", ".join([str(c) for c in choices])}]"
+                    else:
+                        cell = None
                 else:
                     cell = getattr(node, col_key, None)
                 cell_mapping[col_key] = cell
@@ -118,15 +128,20 @@ class CliDefDumper:
         col_keys = ["#"] + list(col_keys)
         row_separator = RowRecord(row_type=RowType.SEPARATOR)
         row_records = [row_separator] + list(row_records) + [row_separator]
+        headers = [
+            Cell(col_key.upper(), Style(fg_color="cyan"))
+            for col_key in col_keys
+        ]
         table = TableBuilder.from_row_records(
             columns=col_keys,
             row_records=row_records,
             display_column_keys=col_keys,
+            headers=headers,
         )
         table.row_records.insert(
             0,
             RowRecord(
-                row_type=RowType.HEADER_KEY,
+                row_type=RowType.HEADER,
                 default_style=Style(bold=True)
             )
         )
@@ -147,6 +162,11 @@ class CliDefDumper:
                         bold=True,
                         fg_color="green",
                         ).merge(col.default_style)
+                if col_key == "choices":
+                    col.default_style = Style(
+                        bold=True,
+                        fg_color="green"
+                    ).merge(col.default_style)
 
         if as_help:
             # apply row styles
