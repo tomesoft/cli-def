@@ -27,7 +27,10 @@ class ArgumentDef(CliDefNode):
 
     def __post_init__(self):
         if self.mult is None:
-            self.mult = MultDef(1, 1)
+            if self.is_positional:
+                self.mult = MultDef(1, 1)
+            else:
+                self.mult = MultDef(0, 1)
 
         elif isinstance(self.mult, str):
             self.mult = MultDef.from_str(self.mult)
