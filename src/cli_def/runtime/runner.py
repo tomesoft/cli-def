@@ -9,6 +9,7 @@ import logging
 from ..models import CliDef
 from ..backend.argparse import ArgparseBuilder
 from ..ops import CliDefDumper
+from ..resolver import CliDefResolver
 
 
 from .dispatcher import CliDispatcher
@@ -44,9 +45,13 @@ class CliRunner:
         self.default_ctx = default_ctx
         self.session = session
 
+        self.cli_def_resolved: CliDef = CliDefResolver().resolve(self.cli_def)
         self.ctx: CliRuntimeContext|None = None
         self.builder: ArgparseBuilder = ArgparseBuilder()
-        self.dispatcher: CliDispatcher = CliDispatcher(self.cli_def, fallback_handler=self.fallback_handler)
+        self.dispatcher: CliDispatcher = CliDispatcher(
+            self.cli_def_resolved,
+            fallback_handler=self.fallback_handler
+        )
 
 
     def run(self, argv: Iterable[str]| str | None = None) -> CliResult:
@@ -112,12 +117,12 @@ class CliRunner:
         return "--help" in argv or "-h" in argv
 
 
-    def show_help(self):
+    def show_help(self, use_backend: bool = False):
         return self._show_help()
 
 
     def _show_help(self):
-        CliDefDumper.dump_pretty(self.cli_def, as_help=True)
+        CliDefDumper.dump_pretty(self.cli_def_resolved, as_help=True, as_resolved=True)
 
 
     def _determine_backend(self) -> str:
@@ -139,7 +144,7 @@ class CliRunner:
         builder = self.builder
         if builder is None:
             builder = ArgparseBuilder()
-        parser = builder.build(self.cli_def)
+        parser = builder.build(self.cli_def_resolved)
         args, remaining = parser.parse_known_args(args=argv)
         return self.dispatcher.dispatch(args, remaining, ctx=self.ctx)
 
@@ -148,7 +153,7 @@ class CliRunner:
         import click
         from ..backend.click import ClickBuilder, ClickBinder
         builder = ClickBuilder()
-        root = builder.build(self.cli_def)
+        root = builder.build(self.cli_def_resolved)
 
         binder = ClickBinder(dispatcher=self.dispatcher, ctx=self.ctx)
         binder.bind(builder.defpath_mapping)

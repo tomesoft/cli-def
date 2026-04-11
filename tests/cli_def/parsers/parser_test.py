@@ -11,7 +11,7 @@ from cli_def.models import (
 )
 
 def data_path() -> Path:
-    return Path(__file__).parent.parent / "data"
+    return Path(__file__).parent.parent.parent / "data"
 
 @fixture
 def minimum_cli_def_path() -> str:
@@ -51,11 +51,12 @@ def test_cli_def_parser_minimum(minimum_cli_def_path):
     result = parser.parse_from_toml(minimum_cli_def_path)
     assert result is not None
     assert isinstance(result, CliDef)
-    assert result.key == "MyCLI"
-    assert result.defpath == "/MyCLI"
+    assert result.key == "MinimumCLI"
+    assert result.defpath == "/MinimumCLI"
     assert result.deflevel == 0
     assert result.help == "HELP", result
     assert len(result.arguments) == 0
+    assert result.commands is not None
     assert len(result.commands) == 0
 
     nodes = list(result.iter_all_nodes())
@@ -67,13 +68,13 @@ def test_cli_def_parser_simple(simple_cli_def_path):
     result = parser.parse_from_toml(simple_cli_def_path)
     assert result is not None
     assert isinstance(result, CliDef)
-    assert result.key == "MyCLI"
-    assert result.defpath == "/MyCLI"
+    assert result.key == "SimpleCLI"
+    assert result.defpath == "/SimpleCLI"
     assert result.help == "HELP", result
     assert len(result.arguments) == 4
     argdef0 = result.arguments[0]
     assert argdef0.key == "positional_param1"
-    assert argdef0.defpath == "/MyCLI/positional_param1"
+    assert argdef0.defpath == "/SimpleCLI/positional_param1"
     assert argdef0.deflevel == 1
     assert argdef0.option == None
     assert argdef0.mult == MultDef(1, 1)
@@ -82,14 +83,14 @@ def test_cli_def_parser_simple(simple_cli_def_path):
     assert argdef0.extra_defs["spec_type"] == "path"
     argdef1 = result.arguments[1]
     assert argdef1.key == "optional_option"
-    assert argdef1.defpath == "/MyCLI/optional_option"
+    assert argdef1.defpath == "/SimpleCLI/optional_option"
     assert argdef1.option == "--option"
     assert argdef1.mult == MultDef(0, 1)
     assert argdef1.type == "str"
     assert len(argdef1.extra_defs) == 0
     argdef2 = result.arguments[2]
     assert argdef2.key == "flag_option"
-    assert argdef2.defpath == "/MyCLI/flag_option"
+    assert argdef2.defpath == "/SimpleCLI/flag_option"
     assert argdef2.option == "--flag"
     assert argdef2.mult == MultDef(0, 1)
     assert argdef2.type == "bool"
@@ -98,7 +99,7 @@ def test_cli_def_parser_simple(simple_cli_def_path):
     # assert argdef2.extra_defs["action"] == "store_true"
     argdef3 = result.arguments[3]
     assert argdef3.key == "choice_option"
-    assert argdef3.defpath == "/MyCLI/choice_option"
+    assert argdef3.defpath == "/SimpleCLI/choice_option"
     assert argdef3.option == "--choice"
     assert argdef3.mult == MultDef(0, 1)
     assert argdef3.type == "str"
@@ -106,6 +107,7 @@ def test_cli_def_parser_simple(simple_cli_def_path):
     assert argdef3.default == "a"
     assert len(argdef3.extra_defs) == 0
 
+    assert result.commands is not None
     assert len(result.commands) == 0
 
     nodes = list(result.iter_all_nodes())
@@ -121,8 +123,9 @@ def test_cli_def_parser_command(command_cli_def_path):
     assert result.defpath == "/MyCLI"
     assert result.help == "HELP", result
 
-    assert len(result.commands) == 3
-    cmd1, cmd2, cmd3 = result.commands
+    assert result.commands is not None
+    assert len(result.commands) == 4
+    cmd1, cmd2, cmd3, cmd4 = result.commands
     assert not cmd1.is_template
     assert cmd1.key == "command1"
     assert cmd1.defpath == "/MyCLI/command1"
@@ -175,8 +178,18 @@ def test_cli_def_parser_command(command_cli_def_path):
     assert cmd3.help == "HELP of command3"
     assert len(cmd3.arguments) == 0
 
+    assert not cmd4.is_template
+    assert cmd4.key == "command4"
+    assert cmd4.defpath == "/MyCLI/command4"
+    assert cmd4.help == "HELP of command4"
+    assert len(cmd4.arguments) == 0
+    assert cmd4.inherit_from is not None
+    assert len(cmd4.inherit_from) == 1
+    assert cmd4.inherit_from[0] == "command2"
+    assert cmd4.bind == {"positional_param1": "fixed"}
+
     nodes = list(result.iter_all_nodes())
-    assert len(nodes) == 8
+    assert len(nodes) == 9
 
 
 def test_cli_def_parser_command_w_template(command_w_template_cli_def_path):

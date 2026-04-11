@@ -151,6 +151,14 @@ def test_argparse_builder_command(command_cli_def_path):
     assert len(remain) == 4
     assert remain == ["param1", "--option", "value_of_option", "--flag"]
 
+    input4 = ["command4", "param1", "--option", "value_of_option", "--flag"]
+    parsed, remain = arg_parser.parse_known_args(input4)
+    assert parsed.command == "command4", parsed
+    assert "param1" in parsed.positional_param1
+    assert parsed.optional_option == "value_of_option"
+    assert parsed.flag_option == True
+    assert len(remain) == 0
+
 
 def test_argparse_builder_command_w_template(command_w_template_cli_def_path):
     parser = CliDefParser()

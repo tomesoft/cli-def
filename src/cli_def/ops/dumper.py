@@ -2,7 +2,7 @@
 from __future__ import annotations
 from typing import Sequence, Any, Tuple, Iterable, Callable
 
-from ..models import CliDef, CliDefNode, MultDef
+from ..models import CliDef, CliDefNode, MultDef, ExecutableNode
 
 from .utils.renderer_ops import TableBuilder
 from .utils.pretty_renderer import PrettyRenderer
@@ -25,17 +25,35 @@ class CliDefDumper:
     COL_CHOICES    = "choices"
     COL_HELP       = "help"
     COL_ENTRYPOINT = "entrypoint"
+    COL_BIND       = "bind" # bind spec
+    COL_BOUND      = "bound" # bound parameters
 
     COL_KEYS_FULL = [
        COL_KEY, COL_CLS, COL_OPTION,
        COL_MULT, COL_TYPE, COL_DEFAULT,
-       COL_CHOICES, COL_HELP, COL_ENTRYPOINT,
+       COL_CHOICES, COL_BIND,
+       COL_HELP, COL_ENTRYPOINT,
+    ]
+
+    COL_KEYS_FULL_FOR_RESOLVED = [
+       COL_KEY, COL_CLS, COL_OPTION,
+       COL_MULT, COL_TYPE, COL_DEFAULT,
+       COL_CHOICES, COL_BOUND,
+       COL_HELP, COL_ENTRYPOINT,
     ]
 
     COL_KEYS_FOR_HELP = [
        COL_KEY, COL_CLS, COL_OPTION,
        COL_MULT, COL_TYPE, COL_DEFAULT,
-       COL_CHOICES, COL_HELP,
+       COL_CHOICES, COL_BIND,
+       COL_HELP,
+    ]
+
+    COL_KEYS_FOR_HELP_FOR_RESOLVED = [
+       COL_KEY, COL_CLS, COL_OPTION,
+       COL_MULT, COL_TYPE, COL_DEFAULT,
+       COL_CHOICES, COL_BOUND,
+       COL_HELP,
     ]
 
 
@@ -101,6 +119,16 @@ class CliDefDumper:
                         cell = f"[{", ".join([str(c) for c in choices])}]"
                     else:
                         cell = None
+                elif col_key == cls.COL_BIND:
+                    if binding := getattr(node, "bind", None):
+                        cell = f"{binding!r}"
+                    else:
+                        cell = None
+                elif col_key == cls.COL_BOUND:
+                    if bound := getattr(node, "bound", None):
+                        cell = f"{bound!r}"
+                    else:
+                        cell = None
                 else:
                     cell = getattr(node, col_key, None)
                 cell_mapping[col_key] = cell
@@ -117,12 +145,13 @@ class CliDefDumper:
         cli_def: CliDef,
         *,
         as_help: bool=False,
+        as_resolved: bool=False,
     ) -> Table:
 
         if as_help:
-            col_keys = cls.COL_KEYS_FOR_HELP
+            col_keys = cls.COL_KEYS_FOR_HELP if not as_resolved else cls.COL_KEYS_FOR_HELP_FOR_RESOLVED
         else:
-            col_keys = cls.COL_KEYS_FULL
+            col_keys = cls.COL_KEYS_FULL if not as_resolved else cls.COL_KEYS_FULL_FOR_RESOLVED
 
         row_records = cls.dump_tree(cli_def, col_keys=col_keys)
         col_keys = ["#"] + list(col_keys)
@@ -190,10 +219,11 @@ class CliDefDumper:
             cli_def: CliDef,
             *,
             as_help: bool=False,
+            as_resolved: bool=False,
             print_func: Callable|None = None
         ) -> Table:
 
-        table = cls.dump(cli_def, as_help=as_help)
+        table = cls.dump(cli_def, as_help=as_help, as_resolved=as_resolved)
 
         cls.print_table(table, print_func=print_func)
 

@@ -86,6 +86,9 @@ class ArgparseBuilder(BuilderProtocol):
             return None
         actions = []
         for argDef in argumentDefs:
+            if argDef.bound is not None:
+                continue # skip bound parameters
+
             logging.debug(f"{argDef.defpath} mult={argDef.mult} nargs={self.to_nargs(argDef.mult)}")
             if argDef.is_positional:
                 # positional paremter

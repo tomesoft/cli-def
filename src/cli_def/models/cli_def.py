@@ -16,9 +16,10 @@ from .argument_def import ArgumentDef
 @dataclass
 class CliDef(ExecutableNode):
     help: str|None = None
+    prompt: str|None = None # prompt on interactive/repl mode
     arguments: list[ArgumentDef] = field(default_factory=list)
     commands: list[CommandDef]|None = None
-    prompt: str|None = None # prompt on interactive/repl mode
+    resolved: bool = False # to be set by resolver
 
     def iter_children(self):
         yield from self.arguments or []
@@ -26,3 +27,18 @@ class CliDef(ExecutableNode):
 
     def get_command_sequence(self) -> Sequence[str]:
         return [self.key]
+
+
+    def merge_missing_from(self, other: CliDef):
+        super().merge_missing_from(other)
+        if self.help is None:
+            self.help = other.help
+        if self.prompt is None:
+            self.prompt = other.prompt
+
+    def override_with(self, other: CliDef):
+        super().override_with(other)
+        if other.help is not None:
+            self.help = other.help
+        if other.prompt is not None:
+            self.prompt = other.prompt

@@ -3,7 +3,7 @@
 title = "CLI definition"
 
 [cli] # cli[.<command>[.<subcommand>]]
-key = "MyCLI"
+key = "SimpleCLI"
 help = "HELP"
 prompt = "simple>> "
 args = [

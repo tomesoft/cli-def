@@ -90,7 +90,7 @@ def test_click_builder_minimum(minimum_cli_def_path):
 
     result = runner.invoke(cli, [])
     assert result.exit_code == 0,result.output
-    assert "/MyCLI " in result.output, result.output
+    assert "/MinimumCLI " in result.output, result.output
 
     result = runner.invoke(cli, ["unexpected_param"])
     # TODO adapt to passthrough
@@ -121,7 +121,7 @@ def test_click_builder_simple(simple_cli_def_path):
     result = runner.invoke(cli, ["param1"])
 
     assert result.exit_code == 0, result.output
-    assert "/MyCLI " in result.output, result.output
+    assert "/SimpleCLI " in result.output, result.output
     assert is_entry_in("positional_param1", "param1", result.output)
     assert is_entry_in("optional_option", None, result.output)
     assert is_entry_in("flag_option", False, result.output)
@@ -130,7 +130,7 @@ def test_click_builder_simple(simple_cli_def_path):
     result = runner.invoke(cli, ["param1", "--option", "MYOPTION", "--flag", "--choice", "c"])
 
     assert result.exit_code == 0, result.output
-    assert "/MyCLI " in result.output, result.output
+    assert "/SimpleCLI " in result.output, result.output
     assert is_entry_in("positional_param1", "param1", result.output)
     assert is_entry_in("optional_option", "MYOPTION", result.output)
     assert is_entry_in("flag_option", True, result.output)

@@ -29,6 +29,8 @@ entrypoint = "cli_def.demo.handlers:run_demo"
 help = "Dump cli-def AST"
 args = [
     {key="cli_def_file", mult="1", type="str"},
+    {key="as_help", option="--as-help", is_flag=true},
+    {key="show_resolved", option="--resolve", is_flag=true},
     #{key="check_entrypoints", option="--check", is_flag=true, default=false},
 ]
 entrypoint = "cli_def.script.handlers.dump:run_dump"

@@ -118,6 +118,32 @@ inherit_from = ["parent"]
 Each entry must refer to an existing command key.  
 Resolution is based on defpath
 
+Only leaf commands (commands without subcommands) can be used as inheritance sources.
+
+Commands that define subcommands are considered containers and cannot be inherited from.
+
+Attempting to inherit from a non-leaf command results in an error.
+
+If inherit_from is not specified, templates are applied implicitly
+
+### 5.2 Inheritance Order
+
+When multiple inheritance sources are specified:
+
+    inherit_from = ["A", "B", "C"]
+
+The resolution order is:
+
+    A → B → C → child
+
+Later entries override earlier ones.
+
+### 5.3 Inheritance Level
+
+Inheritance is resolved only one level deep.
+
+Transitive inheritance is not applied.
+
 ## 6. Parameter Binding（Partial Application）
 
 ```toml
@@ -195,7 +221,16 @@ defpath is used as a unique identifier for commands and is used for:
 - command resolution
 - runtime dispatch
 
-## 9. Execution Model
+## 9. Resolution Model
+
+cli-def defines two representations:
+
+- Raw definition: as written in TOML
+- Resolved definition: fully expanded, used for execution
+
+Runtime and builders operate only on resolved definitions.
+
+## 10. Execution Model
 
 CLI実行時：
 
@@ -205,7 +240,7 @@ CLI実行時：
 4. Construct CliEvent
 5. Dispatch event to handler
 
-## 10. REPL
+## 11. REPL
 
 ```bash
 cli-def repl
@@ -214,6 +249,26 @@ cli-def repl
 - コマンドを逐次実行
 - 結果は内部ストアに保存
 
-## 11. Reserved Commands
+## 12. Reserved Commands
 
-- `_` で始まるコマンドは内部用途
+- `_` で始まるコマンドは内部用途、command template(あるいはargumentグループ)として `inherit_from=["_template"]` から参照可能
+
+## 13. Resolution Phase
+
+CLI definitions are transformed into a resolved form before execution.
+
+This process includes:
+
+- inheritance resolution
+- argument merging
+- parameter binding merge
+- entrypoint resolution
+
+### 13.1 Raw vs Resolved
+
+Raw definition:
+  - preserves user input
+
+Resolved definition:
+  - fully expanded
+  - used for execution

@@ -10,9 +10,10 @@ import re
 # --------------------------------------------------------------------------------
 @dataclass
 class CliDefNode:
-    key: str = ""
+    key: str
     parent: CliDefNode|None = None
     extra_defs: dict[str, Any] = field(default_factory=dict)
+    source: CliDefNode|None = None # set by resolver
 
     @property
     def defpath(self) -> str:
@@ -78,6 +79,15 @@ class CliDefNode:
         return rows
 
 
+    def merge_missing_from(self, other: CliDefNode):
+        for k, v in other.extra_defs:
+            self.extra_defs.setdefault(k, v)
+
+
+    def override_with(self, other: CliDefNode):
+        self.extra_defs.update(other.extra_defs)
+
+
 # --------------------------------------------------------------------------------
 # ExecutableNode
 # base class of CliDef and CommandDef
@@ -85,3 +95,32 @@ class CliDefNode:
 class ExecutableNode(CliDefNode):
     entrypoint: str|None = None
     group: str|None = None
+    bind: dict[str, Any]|None = None # for parameter binding
+
+
+    def merge_missing_from(self, other: ExecutableNode):
+        super().merge_missing_from(other)
+        if self.entrypoint is None:
+            self.entrypoint = other.entrypoint
+        if self.group is None:
+            self.group = other.group
+        if self.bind is None:
+            if other.bind is not None:
+                self.bind = dict(other.bind)
+        else:
+            if other.bind is not None:
+                for k, v in other.bind.items():
+                    self.bind.setdefault(k, v)
+
+
+    def override_with(self, other: ExecutableNode):
+        super().override_with(other)
+        if other.entrypoint is not None:
+            self.entrypoint = other.entrypoint
+        if other.group is not None:
+            self.group = other.group
+        if other.bind is not None:
+            if self.bind is None:
+                self.bind = dict(other.bind)
+            else:
+                self.bind.update(other.bind)

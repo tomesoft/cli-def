@@ -37,7 +37,7 @@ class CliDefParser:
 
 
     def parse_from_mapping(self, mapping: Mapping[str, Any]) -> CliDef | None:
-        cliDef = CliDef()
+        cliDef = CliDef(key=None)
         argDefs:Iterable[ArgumentDef] = []
         commandDefs:Iterable[CommandDef] = []
         for key, value in mapping.get("cli", {}).items():
@@ -51,6 +51,8 @@ class CliDefParser:
                     commandDefs.append(commandDef)
             else:
                 cliDef.extra_defs[key] = value
+
+        assert cliDef.key is not None
 
         for argDef in argDefs:
             argDef.parent = cliDef

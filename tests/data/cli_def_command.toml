@@ -1,7 +1,5 @@
 # cli_def_command.toml
 
-title = "CLI definition"
-
 [cli] # cli[.<command>[.<subcommand>]]
 key = "MyCLI"
 help = "HELP"
@@ -22,3 +20,8 @@ args =  [
 [cli.command3]
 help = "HELP of command3"
 # command3 has no argument
+
+[cli.command4]
+help = "HELP of command4"
+inherit_from = ["command2"]
+bind = {positional_param1 = "fixed"}
