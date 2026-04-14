@@ -15,6 +15,8 @@ class Style:
     DEFAULT_V_SEPARATOR = "|"
     DEFAULT_H_SEPARATOR = "-"
     DEFAULT_TRUNCATE_SYMBOL = "…"
+    LAYOUT_TYPE_TRUNCATE = "truncate"
+    LAYOUT_TYPE_WRAP = "wrap"
 
     h_align:   str|None  = None # right, left, center
     bold:      bool|None = None
@@ -34,6 +36,16 @@ class Style:
     truncate_width:  int|None = None
     truncate_symbol: str|None = None # default "…"
     truncate_mode:   str|None = None # begin, middle, end
+
+    min_width:       int|None = None
+    max_width:       int|None = None
+    layout_type:     str|None = None # wrap, truncate
+
+    @property
+    def has_variable_width(self) -> bool:
+        if self.min_width is not None or self.max_width is not None:
+            return self.min_width != self.max_width
+        return False
 
 
     def make_display_text(self, text: str) -> str:
@@ -72,6 +84,9 @@ class Style:
             truncate_width= self.truncate_width or other.truncate_width,
             truncate_symbol= self.truncate_symbol or other.truncate_symbol,
             truncate_mode= self.truncate_mode or other.truncate_mode,
+            min_width= self.min_width or other.min_width,
+            max_width= self.max_width or other.max_width,
+            layout_type= self.layout_type or other.layout_type,
         )
 
 

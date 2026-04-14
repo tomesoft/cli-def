@@ -3,12 +3,18 @@ from typing import Iterable, Sequence, Any, Mapping
 import argparse
 import logging
 
-from ...models import (
+from ...core.models import (
     CliDefNode,
     CliDef,
-    CommandDef,
-    ExecutableNode,
     ArgumentDef,
+    CommandDef,
+)
+from ...core.models import (
+    ResolvedCliDefNode,
+    ResolvedCliDef,
+    ResolvedCommandDef,
+    ResolvedExecutableNode,
+    ResolvedArgumentDef,
     MultDef,
 )
 
@@ -34,23 +40,21 @@ class ArgparseBuilder(BuilderProtocol):
         return self._defpath_mapping
 
 
-    def build(self, cliDef: CliDef) -> argparse.ArgumentParser:
+    def build(self, cliDef: ResolvedCliDef) -> argparse.ArgumentParser:
         return self.build_argparse(cliDef)
 
 
-    def _register(self, node: CliDefNode, obj: Any):
+    def _register(self, node: ResolvedCliDefNode, obj: Any):
         self._defpath_mapping[node.defpath] = obj
 
 
-    def _register_subparsers(self, node: CliDefNode, obj: Any):
+    def _register_subparsers(self, node: ResolvedCliDefNode, obj: Any):
         special_defpath = "/".join([node.defpath, "__subparsers__"])
         self._defpath_mapping[special_defpath] = obj
 
 
     def build_early_argparse(self, cliDef: CliDef, prog: str|None = None) -> argparse.ArgumentParser|None:
         early_node = cliDef.select_first(lambda n: n.key == CommandDef.EARLY)
-        if early_node is None:
-            return None
 
         parser = argparse.ArgumentParser(
             prog=prog or cliDef.key,
@@ -61,7 +65,7 @@ class ArgparseBuilder(BuilderProtocol):
         return parser
 
 
-    def build_argparse(self, cliDef: CliDef, prog: str|None = None) -> argparse.ArgumentParser:
+    def build_argparse(self, cliDef: ResolvedCliDef, prog: str|None = None) -> argparse.ArgumentParser:
         parser = argparse.ArgumentParser(
             prog=prog or cliDef.key
         )
@@ -79,14 +83,14 @@ class ArgparseBuilder(BuilderProtocol):
 
     def build_arguments(
             self,
-            argumentDefs: Iterable[ArgumentDef],
+            argumentDefs: Iterable[ResolvedArgumentDef]|Iterable[ArgumentDef],
             parser: argparse.ArgumentParser,
             ) -> Iterable[argparse.Action] | None:
         if argumentDefs is None:
             return None
         actions = []
         for argDef in argumentDefs:
-            if argDef.bound is not None:
+            if hasattr(argDef, "has_bound_value") and getattr(argDef, "has_bound_value"):
                 continue # skip bound parameters
 
             logging.debug(f"{argDef.defpath} mult={argDef.mult} nargs={self.to_nargs(argDef.mult)}")
@@ -125,32 +129,22 @@ class ArgparseBuilder(BuilderProtocol):
                 )
 
             actions.append(action)
-            self._register(argDef, action)
+            if isinstance(argDef, ResolvedArgumentDef):
+                self._register(argDef, action)
 
         return actions
 
 
     def build_commands(
             self,
-            commandDefs: Sequence[CommandDef],
+            commandDefs: Sequence[ResolvedCommandDef],
             parser: argparse.ArgumentParser,
             ) -> Iterable[argparse.ArgumentParser] | None:
         if commandDefs is None or len(commandDefs) == 0:
             return None
 
-        # build parent parsers from defs of templates
-        parent_parsers_map = {}
-        for cmdDef in commandDefs:
-            if not cmdDef.is_template or cmdDef.key == CommandDef.EARLY:
-                continue
-            cmd_templ_parser = self.build_single_command(cmdDef)
-            parent_parsers_map[cmdDef.key] = cmd_templ_parser
-            if cmdDef.key == CommandDef.EARLY:
-                #print(f"@@@ early_parser found :{cmdDef.key}")
-                self._early_parser = cmd_templ_parser
-            
-        firstCmdDef: CommandDef = commandDefs[0]
-        assert isinstance(firstCmdDef.parent, ExecutableNode)
+        firstCmdDef: ResolvedCommandDef = commandDefs[0]
+        assert isinstance(firstCmdDef.parent, ResolvedExecutableNode)
         group = (firstCmdDef.parent.group or
                 ("sub" * firstCmdDef.parent.deflevel) + "command"
         )
@@ -159,21 +153,7 @@ class ArgparseBuilder(BuilderProtocol):
         self._register_subparsers(firstCmdDef.parent, subparsers)
         cmd_parsers = []
         for cmdDef in commandDefs:
-            if cmdDef.is_template or cmdDef.key == CommandDef.EARLY:
-                continue
-            # select parent_parsers
-            parent_parsers = []
-            for tmpl in cmdDef.get_templates():
-                if tmpl.key in parent_parsers_map:
-                    #print(f"@@@ parent_parser :{tmpl.key}")
-                    parent_parsers.append(parent_parsers_map[tmpl.key])
-            # # TODO consider forcibly add _early to parents
-            # #print(f"@@@ self_early_parser = {"None" if self._early_parser is None else "Not None"}")
-            # if self._early_parser and self._early_parser not in parent_parsers:
-            #     #print(f"@@@ add _early parser to {cmdDef.defpath}")
-            #     parent_parsers.append(self._early_parser)
-
-            cmd_parser = self.build_single_command(cmdDef, subparsers, parent_parsers)
+            cmd_parser = self.build_single_command(cmdDef, subparsers)
             cmd_parsers.append(cmd_parser)
 
         return cmd_parsers
@@ -181,7 +161,7 @@ class ArgparseBuilder(BuilderProtocol):
 
     def build_single_command(
             self,
-            cmdDef: CommandDef,
+            cmdDef: ResolvedCommandDef,
             subparsers: argparse._SubParsersAction|None = None,
             parent_parsers: Sequence[argparse.ArgumentParser]|None = None
             ) -> argparse.ArgumentParser:
@@ -194,14 +174,15 @@ class ArgparseBuilder(BuilderProtocol):
                 parents=parent_parsers,
             )
         else:
-            kwargs = ({"add_help":True, "help":cmdDef.help}
-                    if cmdDef.help is not None else
-                    {"add_help":False}
-            )
+            # kwargs = ({"add_help":True:cmdDef.help}
+            #         if cmdDef.help is not None else
+            #         {"add_help":False}
+            # )
             parser = argparse.ArgumentParser(
                 cmdDef.key,
                 parents=parent_parsers,
-                **kwargs
+                add_help=True if cmdDef.help is not None else False,
+                # **kwargs
             )
         self.build_arguments(cmdDef.arguments, parser)
         if cmdDef.subcommands:
@@ -213,7 +194,7 @@ class ArgparseBuilder(BuilderProtocol):
         return parser
 
 
-    def _attach_metadata(self, parser, command: CommandDef|CliDef, path):
+    def _attach_metadata(self, parser, command: ResolvedCommandDef|ResolvedCliDef, path):
         parser.set_defaults(
             _path=path,
             _command=command,   # ← これも入れる（重要）

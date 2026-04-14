@@ -2,7 +2,7 @@
 
 from typing import Protocol, Mapping
 
-from ..models import CliDef
+from ..core.models import ResolvedCliDef
 
 
 class BuilderProtocol(Protocol):
@@ -11,7 +11,7 @@ class BuilderProtocol(Protocol):
     def defpath_mapping(self) -> Mapping[str, object]:
         ...
 
-    def build(self, cliDef: CliDef) -> object:
+    def build(self, cliDef: ResolvedCliDef) -> object:
         ...
 
 

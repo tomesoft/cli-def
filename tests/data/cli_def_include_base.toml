@@ -1,0 +1,6 @@
+# cli_def_include_base.toml
+
+[cli] # cli[.<command>[.<subcommand>]]
+key = "BaseCLI"
+help = "HELP"
+include = ["cli_def_simple.toml"]

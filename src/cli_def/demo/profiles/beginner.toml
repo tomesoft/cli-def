@@ -19,3 +19,12 @@ args = [
   {key="upper", option="--upper", aliases=["-U"], is_flag=true}
 ]
 entrypoint = "cli_def.demo.handlers:greet"
+
+[cli.greet-john]
+help = "Greet John"
+inherit_from = ["greet"]
+bind = {"name" = "John"}
+
+[cli.greet-john-loud]
+inherit_from = ["greet"]
+bind = {name = "John", upper = true}

@@ -14,52 +14,57 @@ from click.testing import CliRunner
 
 from cli_def import (
     CliDefParser,
-    CliDef,
 )
+
+from cli_def.core.models import ResolvedCliDef
+from cli_def.core.resolver import CliDefResolver
 from cli_def.backend.click import ClickBuilder
 
 def data_path() -> Path:
     return Path(__file__).parent.parent.parent / "data"
 
 @fixture
-def minimum_cli_def_path() -> str:
-    return str(data_path() / "cli_def_minimum.toml")
+def minimum_cli_def_path():
+    return data_path() / "cli_def_minimum.toml"
 
 @fixture
-def hello_world_cli_def_path() -> str:
-    return str(data_path() / "cli_def_hello_world.toml")
+def hello_world_cli_def_path():
+    return data_path() / "cli_def_hello_world.toml"
     
 @fixture
-def simple_cli_def_path() -> str:
-    return str(data_path() / "cli_def_simple.toml")
+def simple_cli_def_path():
+    return data_path() / "cli_def_simple.toml"
 
 @fixture
-def command_cli_def_path() -> str:
-    return str(data_path() / "cli_def_command.toml")
+def command_cli_def_path():
+    return data_path() / "cli_def_command.toml"
 
 @fixture
-def command_w_template_cli_def_path() -> str:
-    return str(data_path() / "cli_def_command_w_template.toml")
+def command_w_template_cli_def_path():
+    return data_path() / "cli_def_command_w_template.toml"
 
 @fixture
-def subcommand_cli_def_path() -> str:
-    return str(data_path() / "cli_def_subcommand.toml")
+def subcommand_cli_def_path():
+    return data_path() / "cli_def_subcommand.toml"
 
 @fixture
-def subcommand_w_template_cli_def_path() -> str:
-    return str(data_path() / "cli_def_subcommand_w_template.toml")
+def subcommand_w_template_cli_def_path():
+    return data_path() / "cli_def_subcommand_w_template.toml"
 
-# def sample_cli_definition_path() -> str:
-#     #return Path.relative_to(Path.cwd(), "resource/test.toml")
-#     return "resources/test.toml"
+
+def prepare_cli_def(path: Path) -> ResolvedCliDef:
+    parser = CliDefParser()
+    cliDef = parser.parse_from_toml(path)
+    assert cliDef is not None
+    resolvedCliDef = CliDefResolver().resolve(cliDef)
+    return resolvedCliDef
 
 # helper method whether key:val entry is in output
 def is_entry_in(key: str, val: Any, output: str) -> Any:
     return re.search(f"{key!r}: {val!r}", output)
 
 def test_click_builder_hello_world(hello_world_cli_def_path):
-    parser = CliDefParser()
-    cliDef = parser.parse_from_toml(hello_world_cli_def_path)
+    cliDef = prepare_cli_def(hello_world_cli_def_path)
     assert cliDef is not None
     builder = ClickBuilder()
     cli = builder.build(cliDef)
@@ -73,8 +78,7 @@ def test_click_builder_hello_world(hello_world_cli_def_path):
 
 
 def test_click_builder_minimum(minimum_cli_def_path):
-    parser = CliDefParser()
-    cliDef = parser.parse_from_toml(minimum_cli_def_path)
+    cliDef = prepare_cli_def(minimum_cli_def_path)
     assert cliDef is not None
     builder = ClickBuilder()
     cli = builder.build(cliDef)
@@ -99,8 +103,7 @@ def test_click_builder_minimum(minimum_cli_def_path):
 
 
 def test_click_builder_simple(simple_cli_def_path):
-    parser = CliDefParser()
-    cliDef = parser.parse_from_toml(simple_cli_def_path)
+    cliDef = prepare_cli_def(simple_cli_def_path)
     assert cliDef is not None
     builder = ClickBuilder()
     cli = builder.build(cliDef)
@@ -144,8 +147,7 @@ def test_click_builder_simple(simple_cli_def_path):
 
     
 def test_click_builder_command(command_cli_def_path):
-    parser = CliDefParser()
-    cliDef = parser.parse_from_toml(command_cli_def_path)
+    cliDef = prepare_cli_def(command_cli_def_path)
     assert cliDef is not None
     builder = ClickBuilder()
     cli = builder.build(cliDef)
@@ -191,8 +193,7 @@ def test_click_builder_command(command_cli_def_path):
 
 
 def test_click_builder_command_w_template(command_w_template_cli_def_path):
-    parser = CliDefParser()
-    cliDef = parser.parse_from_toml(command_w_template_cli_def_path)
+    cliDef = prepare_cli_def(command_w_template_cli_def_path)
     assert cliDef is not None
     builder = ClickBuilder()
     cli = builder.build(cliDef)
@@ -247,8 +248,7 @@ def test_click_builder_command_w_template(command_w_template_cli_def_path):
 
 
 def test_arg_parser_subcommand(subcommand_cli_def_path):
-    parser = CliDefParser()
-    cliDef = parser.parse_from_toml(subcommand_cli_def_path)
+    cliDef = prepare_cli_def(subcommand_cli_def_path)
     assert cliDef is not None
     builder = ClickBuilder()
     cli = builder.build(cliDef)
@@ -274,8 +274,7 @@ def test_arg_parser_subcommand(subcommand_cli_def_path):
 
 
 def test_arg_parser_subcommand_w_template(subcommand_w_template_cli_def_path):
-    parser = CliDefParser()
-    cliDef = parser.parse_from_toml(subcommand_w_template_cli_def_path)
+    cliDef = prepare_cli_def(subcommand_w_template_cli_def_path)
     assert cliDef is not None
     builder = ClickBuilder()
     cli = builder.build(cliDef)

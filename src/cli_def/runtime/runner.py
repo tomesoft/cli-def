@@ -6,10 +6,13 @@ import sys
 import argparse
 import logging
 
-from ..models import CliDef
+from ..core.models import (
+    CliDef,
+    ResolvedCliDef,
+)
 from ..backend.argparse import ArgparseBuilder
 from ..ops import CliDefDumper
-from ..resolver import CliDefResolver
+from ..core.resolver import CliDefResolver
 
 
 from .dispatcher import CliDispatcher
@@ -37,6 +40,7 @@ class CliRunner:
             default_backend: str="argparse",
             default_ctx: CliRuntimeContext|None = None,
             session: CliSession|None = None,
+            use_early_parse: bool = False,
             ):
         self.cli_def = cli_def
         self.fallback_handler = fallback_handler
@@ -44,8 +48,9 @@ class CliRunner:
         self.backend: str|None = None
         self.default_ctx = default_ctx
         self.session = session
+        self._use_early_parse: bool = use_early_parse
 
-        self.cli_def_resolved: CliDef = CliDefResolver().resolve(self.cli_def)
+        self.cli_def_resolved: ResolvedCliDef = CliDefResolver().resolve(self.cli_def)
         self.ctx: CliRuntimeContext|None = None
         self.builder: ArgparseBuilder = ArgparseBuilder()
         self.dispatcher: CliDispatcher = CliDispatcher(
@@ -55,23 +60,37 @@ class CliRunner:
 
 
     def run(self, argv: Iterable[str]| str | None = None) -> CliResult:
+        #print("@@@1")
         argv = self._normalize_argv(argv)
+        #print("@@@2")
 
-        early_args, remaining = self._early_parse(argv)
-        self.ctx = self._make_context(early_args)
+        if self._use_early_parse:
+            early_args, remaining = self._early_parse(argv)
+            logging.debug(f"@@@@ early_args:{early_args}, remaining:{remaining}")
 
+            self.ctx = self._make_context(early_args)
+        else:
+            remaining = argv
+            self.ctx = self._make_context()
+
+        #print("@@@3")
         if self._should_show_help(argv):
             self._show_help()
             return CliResult([], exit_code=1)
 
+        #print("@@@4")
         self._setup_runtime()
 
+        #print("@@@5")
         self.backend = self._determine_backend()
 
+        #print("@@@6")
         handler_result = self._execute_backend(remaining)
         #print(f"@@@ hander_result = {type(handler_result)}, datatype={type(handler_result.data)}")
+        #print("@@@7")
         if self.session:
             self.session.result_store.add(handler_result)
+        #print("@@@8")
         return self._normalize_result([handler_result])
 
 
@@ -94,6 +113,7 @@ class CliRunner:
 
     def _early_parse(self, argv: Sequence[str]) -> Tuple[argparse.Namespace|None, Sequence[str]]:
         parser = self._build_early_parser()
+        #print(f"@@@@ _early_parser = {parser}")
         if parser:
             return parser.parse_known_args(argv)
         return None, argv

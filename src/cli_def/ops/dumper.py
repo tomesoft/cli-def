@@ -2,7 +2,15 @@
 from __future__ import annotations
 from typing import Sequence, Any, Tuple, Iterable, Callable
 
-from ..models import CliDef, CliDefNode, MultDef, ExecutableNode
+from ..core.models import (
+    CliDef,
+    CliDefNode,
+    MultDef,
+)
+from ..core.models import (
+    ResolvedCliDef,
+    ResolvedCliDefNode,
+)
 
 from .utils.renderer_ops import TableBuilder
 from .utils.pretty_renderer import PrettyRenderer
@@ -68,11 +76,11 @@ class CliDefDumper:
 
     @classmethod
     def to_short_cls(cls, type) -> str:
-        if type.__name__ == "CommandDef":
+        if type.__name__ == "CommandDef" or type.__name__ == "ResolvedCommandDef":
             return "cmd"
-        if type.__name__ == "ArgumentDef":
+        if type.__name__ == "ArgumentDef" or type.__name__ == "ResolvedArgumentDef":
             return "arg"
-        if type.__name__ == "CliDef":
+        if type.__name__ == "CliDef" or type.__name__ == "ResolvedCliDef":
             return "cli"
         return "unk"
 
@@ -80,7 +88,7 @@ class CliDefDumper:
     @classmethod
     def dump_tree(
             cls,
-            cli_def_node: CliDefNode,
+            cli_def_node: CliDefNode|ResolvedCliDefNode,
             *,
             col_keys: Iterable[str],
         ) -> Sequence[RowRecord]:
@@ -125,8 +133,10 @@ class CliDefDumper:
                     else:
                         cell = None
                 elif col_key == cls.COL_BOUND:
-                    if bound := getattr(node, "bound", None):
+                    if bound := getattr(node, "bound_params", None):
                         cell = f"{bound!r}"
+                    elif getattr(node, "has_bound_value", False):
+                        cell = f"{getattr(node, "bound_value")}"
                     else:
                         cell = None
                 else:
@@ -142,7 +152,7 @@ class CliDefDumper:
     @classmethod
     def dump(
         cls,
-        cli_def: CliDef,
+        cli_def: CliDef|ResolvedCliDef,
         *,
         as_help: bool=False,
         as_resolved: bool=False,
@@ -179,7 +189,7 @@ class CliDefDumper:
         for col_key, col in table.column_mapping.items():
             if col_key == "help":
                 col.default_style = Style(
-                    wrap_width=30,
+                    min_width=30,
                 ).merge(col.default_style)
             if col_key == "choices":
                 col.default_style = Style(
@@ -216,7 +226,7 @@ class CliDefDumper:
     @classmethod
     def dump_pretty(
             cls,
-            cli_def: CliDef,
+            cli_def: CliDef|ResolvedCliDef,
             *,
             as_help: bool=False,
             as_resolved: bool=False,

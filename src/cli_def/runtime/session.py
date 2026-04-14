@@ -10,8 +10,8 @@ try:
 except ImportError:
     pass
 
-from ..models import CliDef
-from ..parsers import CliDefParser
+from ..core.models.raw import CliDef
+from ..core.parser import CliDefParser
 from .runner import CliRunner
 from .context import CliRuntimeContext
 from .result import ResultStore, ResultView, CliHandlerResult
@@ -134,6 +134,7 @@ class CliSession(CliSessionProtocol):
     # --- execution -------------------------------------------------
 
     def execute_line(self, line: str) -> Any:
+        #print(f"@@@ execute_line: {line}")
         return self.runner.run(line)
 
     # --- REPL ------------------------------------------------------

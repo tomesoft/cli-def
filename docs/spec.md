@@ -272,3 +272,21 @@ Raw definition:
 Resolved definition:
   - fully expanded
   - used for execution
+
+
+## X. Include
+
+The `include` field may be specified in the `[cli]` section.
+
+Example:
+
+```toml
+    [cli]
+    include = ["file1.toml", "file2.toml"]
+```
+
+Included files must also define a `[cli]` section.
+
+Inclusion is processed in order, and later definitions override earlier ones.
+
+The `include` field is not present in resolved definitions.

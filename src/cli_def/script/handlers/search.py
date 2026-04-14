@@ -5,7 +5,7 @@ import logging
 from pathlib import Path
 
 
-from ...models import (
+from ...core.models.raw import (
     CliDef,
 )
 from ...runtime import (

@@ -7,11 +7,12 @@ except ImportError:
         "click is required for click builder. Install with `cli-def[click]`"
     )
 
-from ...models import (
-    CliDefNode,
-    CliDef,
-    CommandDef,
-    ArgumentDef,
+from ...core.models import (
+    ResolvedCliDefNode,
+    ResolvedCliDef,
+    ResolvedCommandDef,
+    ResolvedExecutableNode,
+    ResolvedArgumentDef,
     MultDef
 )
 
@@ -42,7 +43,7 @@ class ClickBuilder(BuilderProtocol):
         return self._defpath_mapping
 
 
-    def build(self, cliDef: CliDef) -> GroupOrCommand:
+    def build(self, cliDef: ResolvedCliDef) -> GroupOrCommand:
         return self.build_click(cliDef)
 
 
@@ -50,14 +51,14 @@ class ClickBuilder(BuilderProtocol):
         self._defpath_mapping[node.defpath] = obj
 
 
-    def build_click(self, cliDef: CliDef) -> GroupOrCommand:
+    def build_click(self, cliDef: ResolvedCliDef) -> GroupOrCommand:
         if not cliDef.commands:
             return self._build_root_command(cliDef)
 
         return self._build_root_group(cliDef)
 
 
-    def _build_root_command(self, cliDef: CliDef) -> click.Command:
+    def _build_root_command(self, cliDef: ResolvedCliDef) -> click.Command:
         params = [self._build_param(arg) for arg in cliDef.arguments]
 
         def callback(**kwargs):
@@ -79,7 +80,7 @@ class ClickBuilder(BuilderProtocol):
         return cmd
 
 
-    def _build_root_group(self, cliDef: CliDef) -> click.Group:
+    def _build_root_group(self, cliDef: ResolvedCliDef) -> click.Group:
         root = click.Group(name=cliDef.key, help=cliDef.help)
 
         self._register(cliDef, root)
@@ -94,11 +95,11 @@ class ClickBuilder(BuilderProtocol):
         return root
 
 
-    def _build_command(self, cmdDef: CommandDef) -> click.Command:
+    def _build_command(self, cmdDef: ResolvedCommandDef) -> click.Command:
         params = [self._build_param(arg) for arg in cmdDef.arguments]
         # collect arguments from template
-        for tmpl_cmd in cmdDef.get_templates():
-            params.extend([self._build_param(arg) for arg in tmpl_cmd.arguments])
+        # for tmpl_cmd in cmdDef.get_templates():
+        #     params.extend([self._build_param(arg) for arg in tmpl_cmd.arguments])
 
         if cmdDef.subcommands:
             grp = click.Group(name=cmdDef.key, help=cmdDef.help, params=params)
@@ -119,7 +120,7 @@ class ClickBuilder(BuilderProtocol):
             help=cmdDef.help,
             params=params,
             callback=callback,
-            hidden=cmdDef.is_template,
+            #hidden=cmdDef.is_template,
             context_settings={
                 "ignore_unknown_options": True,
                 "allow_extra_args": True,
@@ -131,12 +132,12 @@ class ClickBuilder(BuilderProtocol):
         return cmd
 
 
-    def _build_param(self, arg: ArgumentDef) -> click.Parameter:
+    def _build_param(self, arg: ResolvedArgumentDef) -> click.Parameter:
         if arg.option:
             # option
             param = click.Option(
                 #[arg.option, arg.key], # works but ...
-                [arg.option] + (arg.aliases or []),
+                [arg.option] + (list(arg.aliases) or []),
                 help=arg.help,
                 default=arg.default,
                 is_flag=arg.is_flag or False,
@@ -158,7 +159,7 @@ class ClickBuilder(BuilderProtocol):
     def _attach_commands(
             self,
             parent: click.Group,
-            commands: Iterable[CommandDef]
+            commands: Iterable[ResolvedCommandDef]
         ):
         for cmd in commands or []:
             parent.add_command(self._build_command(cmd))
@@ -167,7 +168,7 @@ class ClickBuilder(BuilderProtocol):
     def _attach_params(
             self,
             cmd: click.Command,
-            arguments: Iterable[ArgumentDef]
+            arguments: Iterable[ResolvedArgumentDef]
         ):
         for arg in arguments or []:
             cmd.params.append(self._build_param(arg))

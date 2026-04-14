@@ -217,7 +217,7 @@ class PrettyRenderer(BaseRenderer):
         if self.use_terminal_width:
             terminal_width = get_terminal_width()
             logging.info(f"@@@ terminal_width = {terminal_width}")
-        pre_rendered_table = self._pre_render_table(table)
+        pre_rendered_table = self._pre_render_table(table, terminal_width)
 
         logging.info(f"@@@ pre_rendered_table_width = {pre_rendered_table.table_width}")
         assert pre_rendered_table.col_widths
@@ -250,29 +250,31 @@ class PrettyRenderer(BaseRenderer):
     # --------------------------------------------------------------------------------
     # Pre Rendering
     # --------------------------------------------------------------------------------
-    def _pre_render_table(self, table: Table) -> PreRenderedTable:
+    def _pre_render_table(self, table: Table, layout_width: int|None = None) -> PreRenderedTable:
+
         # 1) collect used columns
+        fixed_width_col_key_lst: list[str] = []
+        variable_width_col_key_lst: list[str] = []
         col_widths: dict[str, int] = {}
         for col_key in table.display_column_keys:
             if col_key in table.column_mapping:
                 col_widths[col_key] = 0
+                col_style = table.column_mapping[col_key].default_style
+                if col_style and col_style.has_variable_width:
+                    variable_width_col_key_lst.append(col_key)
+                else:
+                    fixed_width_col_key_lst.append(col_key)
+
         
-        col_key_lst = list(col_widths.keys())
-        # 2) pre render rows
-        pre_rendered_rows: list[PreRenderedRow] = []
-        row_index = 0
-        for row in table.row_records:
-            if row.row_type == RowType.NORMAL: # TODO consider DATA
-                row_index += 1
-
-            pre_rendered_row = self._pre_render_row(
-                table,
-                row,
-                row_index,
-                col_key_lst,
-            )
-
-            pre_rendered_rows.append(pre_rendered_row)
+        col_key_lst = (
+            fixed_width_col_key_lst if layout_width is not None
+            else [k for k in col_widths.keys()]
+        )
+        # 2) pre render rows part of fixed width columns
+        pre_rendered_rows: list[PreRenderedRow] = self._pre_render_rows(
+            table,
+            col_key_lst
+        )
 
         # 3) calcuate col max widths
         for row in pre_rendered_rows:
@@ -280,10 +282,41 @@ class PrettyRenderer(BaseRenderer):
                 text_len = self._calc_cell_width(cell)
                 col_widths[col_key] = max(col_widths[col_key], text_len)
 
-        table_width = self._calculate_table_width(
+        tmp_table_width = self._calculate_table_width(
             table,
             col_widths
         )
+
+        # 4) layout variable part
+        if variable_width_col_key_lst and layout_width is not None:
+            logging.debug("@@@@ Variable Layout @@@@")
+            remaining_width = layout_width - tmp_table_width
+            # 4.1) layout with remaining width
+            pre_rendered_rows_variable_cols: list[PreRenderedRow] = self._pre_render_rows(
+                table,
+                variable_width_col_key_lst,
+                layout_width=remaining_width
+            )
+            # 4.2) merge PreRenderedRows
+            for r1, r2 in zip(pre_rendered_rows, pre_rendered_rows_variable_cols):
+                assert r1.source == r2.source
+                r1.cell_mapping.update(r2.cell_mapping)
+
+            # 4.3) recalculate table_width
+            for row in pre_rendered_rows_variable_cols:
+                for col_key, cell in row.cell_mapping.items():
+                    text_len = self._calc_cell_width(cell)
+                    col_widths[col_key] = max(col_widths[col_key], text_len)
+
+            table_width = self._calculate_table_width(
+                table,
+                col_widths
+            )
+
+        else:
+            logging.debug("@@@@ Fixed Layout @@@@")
+            table_width = tmp_table_width
+
 
         default_separator = Style.DEFAULT_H_SEPARATOR * table_width
 
@@ -322,13 +355,111 @@ class PrettyRenderer(BaseRenderer):
         return table_width
 
 
+    def _pre_render_rows(
+            self,
+            table: Table,
+            col_key_lst: list[str],
+            *,
+            layout_width: int|None = None
+        ) -> list[PreRenderedRow]:
+        pre_rendered_rows = []
+        row_index = 0
+        for row in table.row_records:
+            if row.row_type == RowType.NORMAL: # TODO consider DATA
+                row_index += 1
+
+            pre_rendered_row = self._pre_render_row(
+                table,
+                row,
+                row_index,
+                col_key_lst,
+                layout_width=layout_width,
+            )
+
+            pre_rendered_rows.append(pre_rendered_row)
+        return pre_rendered_rows
+
+    def _calculate_layout_col_widths(
+            self,
+            table: Table,
+            layout_width: int,
+            variable_col_key_lst: list[str],
+            default_min_width: int = 10,
+            default_max_width: int|None = None,
+        ) -> dict[str, int]:
+
+        col_width_range_map: dict[str, Tuple[int, int|None]] = {}
+        total_gap_width = 0
+
+        # 1) collect width range
+        for col_key in variable_col_key_lst:
+            col_style = table.column_mapping[col_key].default_style
+            if col_style:
+                col_width_range_map[col_key] = (
+                    col_style.min_width or default_min_width,
+                    col_style.max_width or default_max_width
+                )
+                total_gap_width += self.calc_width(col_style.gap_to_next or Style.DEFAULT_GAP)
+            else:
+                col_width_range_map[col_key] = (default_min_width, default_max_width)
+                total_gap_width += self.calc_width(Style.DEFAULT_GAP)
+
+        # 2) calculate total min widths
+        total_min_width = sum([min for min, _ in col_width_range_map.values()])
+
+        remaining_width = layout_width - total_gap_width
+
+        if remaining_width <= total_min_width:
+            return {k: v[0] for k, v in col_width_range_map.items()}
+
+        # 3) calculate ratio
+        ratio_map: dict[str, float] = {
+            k: v[0]/total_min_width for k, v in col_width_range_map.items()
+        }
+
+        # 4) calculate rough width
+        rough_width_map = {
+            k: int(v[0] * remaining_width) for k, v in col_width_range_map.items()
+        }
+
+        # 5) fix width
+        resolved_width_map: dict[str, int] = {}
+        free_width_col_keys = []
+        for k, (_, maxw) in col_width_range_map.items():
+            if maxw is None:
+                free_width_col_keys.append(k)
+                continue
+            resolved_width = min(rough_width_map[k], maxw)
+            resolved_width_map[k] = resolved_width
+            remaining_width -= resolved_width
+
+        if len(free_width_col_keys) == 0:
+            return  resolved_width_map
+        elif len(free_width_col_keys) == 1:
+            resolved_width_map[free_width_col_keys[0]] = remaining_width
+            return resolved_width_map
+        
+        # TODO multiple free width columns layout
+        raise NotImplementedError("multiple free width columns layout not implemented")
+
+
     def _pre_render_row(
             self,
             table: Table,
             row: RowRecord,
             row_index1: int,
             col_key_lst: list[str],
+            *,
+            layout_width: int|None = None,
         ) -> PreRenderedRow:
+
+        if layout_width:
+            logging.debug(f"@@@ row layout width = {layout_width}")
+            layout_col_width_map = self._calculate_layout_col_widths(
+                table, layout_width, col_key_lst
+            )
+        else:
+            layout_col_width_map = {}
 
         row_style = row.default_style # TODO conditional style
 
@@ -345,6 +476,7 @@ class PrettyRenderer(BaseRenderer):
                         cellOrValue,
                         col_style,
                         row_style,
+                        layout_width=layout_col_width_map.get(col_key, None),
                     )
                 else:
                     style = self._determine_style(col_style, row_style)
@@ -361,6 +493,7 @@ class PrettyRenderer(BaseRenderer):
                         cellOrValue,
                         col_style,
                         row_style,
+                        layout_width=layout_col_width_map.get(col_key, None),
                     )
                 else:
                     style = self._determine_style(col_style, row_style)
@@ -372,6 +505,7 @@ class PrettyRenderer(BaseRenderer):
                     cellOrValue,
                     col_style,
                     row_style,
+                    layout_width=layout_col_width_map.get(col_key, None),
                 )
             elif column.col_type == ColumnType.INDEX0:
                 style = self._determine_style(col_style, row_style)
@@ -405,6 +539,8 @@ class PrettyRenderer(BaseRenderer):
             cellOrValue: CellOrValue,
             col_style: Style|None,
             row_style: Style|None,
+            *,
+            layout_width: int|None = None,
         ) -> PreRenderedCell:
 
         if isinstance(cellOrValue, Cell):
@@ -413,12 +549,18 @@ class PrettyRenderer(BaseRenderer):
         else:
             style = self._determine_style(col_style, row_style) # TODO consider order
             display_text = self.make_display_text(cellOrValue, style)
-
-        #pre_rendered_segs: list[str] = []
-        if style and style.wrap_width and style.wrap_width > 0:
-            pre_rendered_segs = self.wrap(display_text, style.wrap_width)
+        
+        if layout_width:
+            logging.debug(f"@@@ cell layout width = {layout_width}")
+            if style and style.layout_type == Style.LAYOUT_TYPE_TRUNCATE:
+                raise NotImplementedError("layout_type TRUNCATE not implemented")
+            else:
+                pre_rendered_segs = self.wrap(display_text, layout_width)
         else:
-            pre_rendered_segs = [display_text]
+            if style and style.wrap_width and style.wrap_width > 0:
+                pre_rendered_segs = self.wrap(display_text, style.wrap_width)
+            else:
+                pre_rendered_segs = [display_text]
 
         return PreRenderedCell(
             pre_rendered_segs=pre_rendered_segs,

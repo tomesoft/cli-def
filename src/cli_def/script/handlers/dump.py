@@ -11,7 +11,7 @@ from ...ops import (
     load_cli_def_path,
     CliDefDumper,
 )
-from ...resolver import CliDefResolver
+from ...core.resolver import CliDefResolver
 
 from ...runtime import cli_def_handler, CliHandlerResult
 
@@ -41,7 +41,7 @@ def run_dump(event: CliEvent):
         )
 
     if show_resolved:
-        print("@@@ RESOLVE @@@")
+        logging.debug("@@@ RESOLVE @@@")
         resolver = CliDefResolver()
         cli_def = resolver.resolve(cli_def)
     

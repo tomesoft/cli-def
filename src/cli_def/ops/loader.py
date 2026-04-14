@@ -11,8 +11,8 @@ from pathlib import Path
 
 PathLike = Union[str, Path]
 
-from ..models import CliDef
-from ..parsers import CliDefParser
+from ..core.models.raw import CliDef
+from ..core.parser import CliDefParser
 
 
 def load_toml_beside(

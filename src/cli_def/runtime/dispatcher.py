@@ -6,10 +6,16 @@ import argparse
 import logging
 
 from .event import CliEvent
-from ..models import (
-    CliDef,
-    ExecutableNode,
-    CommandDef,
+# from ..core.models import (
+#     CliDef,
+#     ExecutableNode,
+#     CommandDef,
+#     MultDef,
+# )
+from ..core.models import (
+    ResolvedCliDef,
+    ResolvedExecutableNode,
+    ResolvedCommandDef,
     MultDef,
 )
 
@@ -22,8 +28,12 @@ from .result import CliHandlerResult
 # --------------------------------------------------------------------------------
 class CliDispatcher:
 
-    def __init__(self, cli_def: CliDef, fallback_handler: Callable[[CliEvent], CliHandlerResult|None]|Any = None):
-        self.cli_def : CliDef = cli_def
+    def __init__(
+            self,
+            cli_def: ResolvedCliDef,
+            fallback_handler: Callable[[CliEvent], CliHandlerResult|None]|Any = None
+        ):
+        self.cli_def : ResolvedCliDef = cli_def
         self.fallback_handler : Callable[[CliEvent], Any] = fallback_handler or type(self)._default_fallback_handler
         self._handler_cache: dict[str, Callable] = {}
         self._pre_load_entrypoints()
@@ -44,7 +54,7 @@ class CliDispatcher:
         # )
         entrypoints = {
             node.entrypoint for node in self.cli_def.iter_all_nodes()
-            if isinstance(node, ExecutableNode) and node.entrypoint is not None
+            if isinstance(node, ResolvedExecutableNode) and node.entrypoint is not None
             }
         for entrypoint in entrypoints:
             self._resolve_handler_entrypoint(entrypoint)
@@ -71,10 +81,10 @@ class CliDispatcher:
             ctx: CliRuntimeContext|None = None,
             ) -> Any:
         logging.debug(f"@@@ Dispatcher._dispatcher called {defpath}")
-        command = self.cli_def.find(defpath)
+        command = self.cli_def.find_by_defpath(defpath)
         if command is None:
             raise RuntimeError(f"Command not found from defpath: [{defpath}]")
-        assert isinstance(command, CommandDef)
+        assert isinstance(command, ResolvedCommandDef)
         params = self._normalize(command, dict(kwargs))
         event = CliEvent.create(
             path=defpath,
@@ -95,7 +105,7 @@ class CliDispatcher:
             extra_args: Sequence[str]|None = None,
             ctx: CliRuntimeContext|None = None,
             ):
-        command = getattr(args, "_command", None)
+        command: ResolvedCommandDef|None = getattr(args, "_command", None)
         path = getattr(args, "_path", None)
 
         if command is None or path is None:
@@ -106,7 +116,6 @@ class CliDispatcher:
             if not k.startswith("_") and (
                 k not in ("_path", "_command", "command"))
         }
-
         params = self._normalize(command, params)
 
         event = CliEvent(
@@ -121,8 +130,14 @@ class CliDispatcher:
         return event
 
 
-    def _normalize(self, command: CommandDef, params: Mapping[str, Any]):
+    def _normalize(self, command: ResolvedCommandDef, params: Mapping[str, Any]):
         result = {}
+
+        params = dict(params)
+
+        # apply bound params
+        if command.bound_params:
+            params.update(command.bound_params)
 
         # key → ArgumentDef のマップ作る
         arg_map = {arg.key: arg for arg in command.arguments}
@@ -147,7 +162,7 @@ class CliDispatcher:
 
         return result
 
-    def _resolve_handler(self, command: CommandDef):
+    def _resolve_handler(self, command: ResolvedCommandDef):
         path = command.defpath  # "MyCLI/command1"
 
         handler = get_registered_handler(path)

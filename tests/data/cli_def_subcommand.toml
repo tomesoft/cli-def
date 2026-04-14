@@ -16,12 +16,16 @@ help = "HELP of subcommand1_1"
 [cli.command1.subcommand1_2]
 help = "HELP of subcommand1_2"
 args =  [
-    {key = "positional_param1", mult = "1", type = "str", spec_type = "path"},
+    {key = "positional_param1", mult = 1, type = "str", spec_type = "path"},
     {key = "optional_option", option = "--option", mult = "?", type = "str"},
     {key = "flag_option", is_flag = true, option = "--flag", default = false},
     {key = "choice_option", option = "--choice", default="a", choices = ["a", "b", "c"], mult = "?", type = "str"},
 ]
 
+[cli.command1.subcommand1_3]
+help = "HELP of subcommand1_3"
+inherit_from = ["subcommand1_2"]
+bind = {"positional_param1"="fixed"}
 
 [cli.command2]
 help = "HELP of command2"

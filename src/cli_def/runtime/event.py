@@ -2,7 +2,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Sequence
-from ..models.command_def import CommandDef
+from ..core.models import ResolvedCommandDef
 
 from .context import CliRuntimeContext
 
@@ -12,7 +12,7 @@ from .context import CliRuntimeContext
 @dataclass
 class CliEvent:
     path: list[str]
-    command: CommandDef
+    command: ResolvedCommandDef
     params: dict[str, Any]
     event_source: Any|None = None
     extra_args: Sequence[str]|None = None

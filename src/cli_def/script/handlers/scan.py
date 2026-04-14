@@ -7,11 +7,11 @@ from pathlib import Path
 
 from importlib import resources
 
-from ...models import (
+from ...core.models.raw import (
     CliDef,
     CommandDef,
 )
-from ...parsers import CliDefParser
+from ...core.parser import CliDefParser
 from ...runtime import (
     CliEvent,
     CliHandlerResult,

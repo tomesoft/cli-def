@@ -43,7 +43,7 @@ group = "subcommand"
 
 [cli.command2._subcommand2] # startswith "_" means command template
 args =  [
-    {key = "positional_param2", mult = "1", type = "str", spec_type = "path"},
+    {key = "positional_param2", mult = 1, type = "str", spec_type = "path"},
     {key = "optional_option2", option = "--option", mult = "?", type = "str"},
     {key = "flag_option2", is_flag = true, option = "--flag", default = false},
     {key = "choice_option2", option = "--choice", default="a", choices = ["a", "b", "c"], mult = "?", type = "str"},
@@ -52,11 +52,18 @@ args =  [
 [cli.command2.subcommand2_1]
 help = "HELP of subcommand2_1"
 # subcommand2_1 inherits arguments from template "command2/_subcommand"
+bind = {"positional_param2" = "fixed2_1"}
 
 [cli.command2.subcommand2_2]
 help = "HELP of subcommand2_2"
 # subcommand2_1 inherits arguments from template "command2/_subcommand"
+bind = {"positional_param2" = "fixed2_2"}
 
 
 [cli.command3]
 help = "HELP of command3"
+
+[cli.command4]
+help = "HELP of command4"
+inherit_from = ["/MyCLI/command1/_subcommand_templ_1"]
+bind = {"positional_param1" = "fixed4", "optional_option" = "fixed_option4"}

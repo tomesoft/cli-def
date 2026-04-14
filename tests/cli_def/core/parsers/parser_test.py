@@ -2,48 +2,52 @@ import pytest
 from pytest import fixture
 from pathlib import Path
 
-from cli_def import (
+from cli_def.core.parser import (
     CliDefParser,
-    CliDef,
 )
-from cli_def.models import (
+from cli_def.core.models import (
+    CliDef,
     MultDef,
 )
 
 def data_path() -> Path:
-    return Path(__file__).parent.parent.parent / "data"
+    return Path(__file__).parent.parent.parent.parent / "data"
 
 @fixture
-def minimum_cli_def_path() -> str:
-    return str(data_path() / "cli_def_minimum.toml")
+def minimum_cli_def_path():
+    return data_path() / "cli_def_minimum.toml"
 
 @fixture
-def hello_world_cli_def_path() -> str:
-    return str(data_path() / "cli_def_hello_world.toml")
+def hello_world_cli_def_path():
+    return data_path() / "cli_def_hello_world.toml"
     
 @fixture
-def simple_cli_def_path() -> str:
-    return str(data_path() / "cli_def_simple.toml")
+def simple_cli_def_path():
+    return data_path() / "cli_def_simple.toml"
 
 @fixture
-def command_cli_def_path() -> str:
-    return str(data_path() / "cli_def_command.toml")
+def command_cli_def_path():
+    return data_path() / "cli_def_command.toml"
 
 @fixture
-def command_w_template_cli_def_path() -> str:
-    return str(data_path() / "cli_def_command_w_template.toml")
+def command_w_template_cli_def_path():
+    return data_path() / "cli_def_command_w_template.toml"
 
 @fixture
-def subcommand_cli_def_path() -> str:
-    return str(data_path() / "cli_def_subcommand.toml")
+def subcommand_cli_def_path():
+    return data_path() / "cli_def_subcommand.toml"
 
 @fixture
-def subcommand_w_template_cli_def_path() -> str:
-    return str(data_path() / "cli_def_subcommand_w_template.toml")
+def subcommand_w_template_cli_def_path():
+    return data_path() / "cli_def_subcommand_w_template.toml"
 
-# def sample_cli_definition_path() -> str:
-#     #return Path.relative_to(Path.cwd(), "resource/test.toml")
-#     return "resources/test.toml"
+@fixture
+def include_base_cli_def_path():
+    return data_path() / "cli_def_include_base.toml"
+
+@fixture
+def include_base_cmd_cli_def_path():
+    return data_path() / "cli_def_include_base_cmd.toml"
 
 
 def test_cli_def_parser_minimum(minimum_cli_def_path):
@@ -58,6 +62,7 @@ def test_cli_def_parser_minimum(minimum_cli_def_path):
     assert len(result.arguments) == 0
     assert result.commands is not None
     assert len(result.commands) == 0
+    assert result.source == minimum_cli_def_path
 
     nodes = list(result.iter_all_nodes())
     assert len(nodes) == 1
@@ -290,13 +295,16 @@ def test_cli_def_parser_subcommand(subcommand_cli_def_path):
     assert cmd1.key == "command1"
     assert cmd1.defpath == "/MyCLI/command1"
     assert cmd1.help == "HELP of command1"
-    assert len(cmd1.subcommands) == 2
-    subcmd1_1, subcmd1_2 = cmd1.subcommands
+
+    assert len(cmd1.subcommands) == 3
+    subcmd1_1, subcmd1_2, subcmd1_3 = cmd1.subcommands
+
     assert subcmd1_1.key == "subcommand1_1"
     assert subcmd1_1.defpath == "/MyCLI/command1/subcommand1_1"
     assert subcmd1_1.deflevel == 2
     assert subcmd1_1.help == "HELP of subcommand1_1"
     assert len(subcmd1_1.arguments) == 0
+
     assert subcmd1_2.key == "subcommand1_2"
     assert subcmd1_2.defpath == "/MyCLI/command1/subcommand1_2"
     assert subcmd1_2.deflevel == 2
@@ -333,6 +341,13 @@ def test_cli_def_parser_subcommand(subcommand_cli_def_path):
     assert argdef3.default == "a"
     assert len(argdef3.extra_defs) == 0
 
+    assert subcmd1_3.key == "subcommand1_3"
+    assert subcmd1_3.defpath == "/MyCLI/command1/subcommand1_3"
+    assert subcmd1_3.deflevel == 2
+    assert subcmd1_3.help == "HELP of subcommand1_3"
+    assert len(subcmd1_3.arguments) == 0
+    assert subcmd1_3.inherit_from == ["subcommand1_2"]
+    assert subcmd1_3.bind == {"positional_param1": "fixed"}
 
     assert not cmd2.is_template
     assert cmd2.key == "command2"
@@ -356,11 +371,10 @@ def test_cli_def_parser_subcommand(subcommand_cli_def_path):
     assert cmd3.key == "command3"
     assert cmd3.defpath == "/MyCLI/command3"
     assert cmd3.help == "HELP of command3"
-    assert cmd3.subcommands is None
-    assert len(cmd3.arguments) == 0
+    assert cmd3.subcommands == []
 
     nodes = list(result.iter_all_nodes())
-    assert len(nodes) == 12
+    assert len(nodes) == 13
 
 
 def test_cli_def_parser_subcommand_w_template(subcommand_w_template_cli_def_path):
@@ -370,8 +384,8 @@ def test_cli_def_parser_subcommand_w_template(subcommand_w_template_cli_def_path
     assert isinstance(result, CliDef)
     assert result.help == "HELP", result
 
-    assert len(result.commands) == 3
-    cmd1, cmd2, cmd3 = result.commands
+    assert len(result.commands) == 4
+    cmd1, cmd2, cmd3, cmd4 = result.commands
     assert not cmd1.is_template
     assert cmd1.key == "command1"
     assert cmd1.defpath == "/MyCLI/command1"
@@ -505,8 +519,37 @@ def test_cli_def_parser_subcommand_w_template(subcommand_w_template_cli_def_path
     assert cmd3.key == "command3"
     assert cmd3.defpath == "/MyCLI/command3"
     assert cmd3.help == "HELP of command3"
-    assert cmd3.subcommands is None
-    assert len(cmd3.arguments) == 0
+    assert cmd3.subcommands == []
+    assert cmd3.arguments == []
+
+    assert not cmd4.is_template
+    assert cmd4.key == "command4"
+    assert cmd4.defpath == "/MyCLI/command4"
+    assert cmd4.help == "HELP of command4"
+    assert cmd4.subcommands == []
+    assert cmd4.arguments == []
+    assert cmd4.inherit_from == ["/MyCLI/command1/_subcommand_templ_1"]
+    assert cmd4.bind == {"positional_param1": "fixed4", "optional_option": "fixed_option4"}
 
     nodes = list(result.iter_all_nodes())
-    assert len(nodes) == 21
+    assert len(nodes) == 22
+
+
+def test_cli_def_parser_include(include_base_cli_def_path):
+    parser = CliDefParser()
+    result = parser.parse_from_toml(include_base_cli_def_path)
+    assert result is not None
+    assert isinstance(result, CliDef)
+    assert result.help == "HELP", result
+    assert result.include == ["cli_def_simple.toml"]
+
+def test_cli_def_parser_include_cmd(include_base_cmd_cli_def_path):
+    parser = CliDefParser()
+    result = parser.parse_from_toml(include_base_cmd_cli_def_path)
+    assert result is not None
+    assert isinstance(result, CliDef)
+    assert result.help == "HELP", result
+    assert result.include == [
+        "cli_def_include_cmd1.toml",
+        "cli_def_include_cmd2.toml"
+    ]

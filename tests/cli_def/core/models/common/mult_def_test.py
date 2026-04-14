@@ -1,6 +1,6 @@
 import pytest
 
-from cli_def.models import MultDef
+from cli_def.core.models.common import MultDef
 
 
 def test_mult_def_1():
@@ -58,3 +58,20 @@ def test_mult_def_2():
 
     mult = MultDef.from_str("2..*")
     assert mult.to_str() == "2..*"
+
+
+def test_mult_def_from_any_int_1():
+    mult = MultDef.from_any(2)
+    assert mult == MultDef(2, 2)
+
+def test_mult_def_from_any_tuple_1():
+    mult = MultDef.from_any((1, 2))
+    assert mult == MultDef(1, 2)
+
+def test_mult_def_from_any_list_1():
+    mult = MultDef.from_any([3, 5])
+    assert mult == MultDef(3, 5)
+
+def test_mult_def_from_any_mapping_1():
+    mult = MultDef.from_any({"lower": 3, "upper":4})
+    assert mult == MultDef(3, 4)

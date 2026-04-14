@@ -1,0 +1,9 @@
+# cli_def_include_cmd1.toml
+
+[cli] # cli[.<command>[.<subcommand>]]
+key = "MyCLI"
+help = "HELP"
+
+[cli.command1]
+help = "HELP of command1"
+# command1 has no argument

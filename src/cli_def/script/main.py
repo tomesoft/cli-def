@@ -22,7 +22,11 @@ def main(argv: Sequence[str]|None=None):
 
     cli_def = load_builtin_cli_def()
     assert cli_def is not None
-    runner = CliRunner(cli_def, fallback_handler=print_handler)
+    runner = CliRunner(
+        cli_def,
+        use_early_parse=True,
+        fallback_handler=print_handler
+    )
 
     result = runner.run(argv)
 
