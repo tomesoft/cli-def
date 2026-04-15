@@ -274,7 +274,7 @@ Resolved definition:
   - used for execution
 
 
-## X. Include
+## 14. Include
 
 The `include` field may be specified in the `[cli]` section.
 
@@ -290,3 +290,9 @@ Included files must also define a `[cli]` section.
 Inclusion is processed in order, and later definitions override earlier ones.
 
 The `include` field is not present in resolved definitions.
+
+
+## 15. Early Parse
+
+`_early` commands are evaluated before normal parsing.
+They are not part of the resolved CLI tree.

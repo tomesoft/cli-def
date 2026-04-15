@@ -461,7 +461,16 @@ class PrettyRenderer(BaseRenderer):
         else:
             layout_col_width_map = {}
 
-        row_style = row.default_style # TODO conditional style
+        row_style = row.default_style
+        # evaluate row conditional styles
+        row_primary_style = None
+        if table.row_conditional_styles:
+            row_conditional_styles: list[Style] = []
+            for cs in table.row_conditional_styles:
+                if cs.cond(row):
+                    row_conditional_styles.append(cs.style)
+            row_primary_style = self._determine_style(*row_conditional_styles)
+            
 
         pre_rendered_cell_mapping: dict[str, PreRenderedCell] = {}
         for col_key in col_key_lst:
@@ -477,13 +486,22 @@ class PrettyRenderer(BaseRenderer):
                         col_style,
                         row_style,
                         layout_width=layout_col_width_map.get(col_key, None),
+                        row_primary_style=row_primary_style,
                     )
                 else:
-                    style = self._determine_style(col_style, row_style)
+                    style = self._determine_style(
+                        row_primary_style,
+                        col_style,
+                        row_style
+                    )
                     display_text = col_key
                     pre_rendered_cell = PreRenderedCell([display_text], style)
             elif row.row_type == RowType.HEADER_KEY:
-                style = self._determine_style(col_style, row_style)
+                style = self._determine_style(
+                    row_primary_style,
+                    col_style,
+                    row_style
+                )
                 display_text = col_key
                 pre_rendered_cell = PreRenderedCell([display_text], style)
             elif row.row_type == RowType.FOOTER:
@@ -494,9 +512,13 @@ class PrettyRenderer(BaseRenderer):
                         col_style,
                         row_style,
                         layout_width=layout_col_width_map.get(col_key, None),
+                        row_primary_style=row_primary_style,
                     )
                 else:
-                    style = self._determine_style(col_style, row_style)
+                    style = self._determine_style(
+                        row_primary_style,
+                        col_style, row_style
+                    )
                     display_text = "" # TODO consider default footer value
                     pre_rendered_cell = PreRenderedCell([display_text], style)
             elif column.col_type == ColumnType.NORMAL:
@@ -506,17 +528,30 @@ class PrettyRenderer(BaseRenderer):
                     col_style,
                     row_style,
                     layout_width=layout_col_width_map.get(col_key, None),
+                    row_primary_style=row_primary_style,
                 )
             elif column.col_type == ColumnType.INDEX0:
-                style = self._determine_style(col_style, row_style)
+                style = self._determine_style(
+                    row_primary_style,
+                    col_style,
+                    row_style
+                )
                 display_text = str(row_index1-1) if row.row_type == RowType.NORMAL else col_key # TODO header
                 pre_rendered_cell = PreRenderedCell([display_text], style)
             elif column.col_type == ColumnType.INDEX1:
-                style = self._determine_style(col_style, row_style)
+                style = self._determine_style(
+                    row_primary_style,
+                    col_style,
+                    row_style
+                )
                 display_text = str(row_index1) if row.row_type == RowType.NORMAL else col_key # TODO header
                 pre_rendered_cell = PreRenderedCell([display_text], style)
             elif column.col_type == ColumnType.SEPARATOR:
-                style = self._determine_style(col_style, row_style)
+                style = self._determine_style(
+                    row_primary_style,
+                    col_style,
+                    row_style
+                )
                 display_text = (
                     style.v_separator
                     if style and style.v_separator
@@ -529,7 +564,7 @@ class PrettyRenderer(BaseRenderer):
 
         return PreRenderedRow(
             cell_mapping=pre_rendered_cell_mapping,
-            style=row_style,
+            style=self._determine_style(row_primary_style, row_style),
             source=row,
         )
 
@@ -541,13 +576,23 @@ class PrettyRenderer(BaseRenderer):
             row_style: Style|None,
             *,
             layout_width: int|None = None,
+            row_primary_style: Style|None,
         ) -> PreRenderedCell:
 
         if isinstance(cellOrValue, Cell):
-            style = self._determine_style(cellOrValue.style, col_style, row_style) # TODO consider order
+            style = self._determine_style(
+                row_primary_style,
+                cellOrValue.style,
+                col_style,
+                row_style
+            ) # TODO consider order
             display_text = self.make_display_text(cellOrValue.raw_value, style)
         else:
-            style = self._determine_style(col_style, row_style) # TODO consider order
+            style = self._determine_style(
+                row_primary_style,
+                col_style,
+                row_style
+            ) # TODO consider order
             display_text = self.make_display_text(cellOrValue, style)
         
         if layout_width:

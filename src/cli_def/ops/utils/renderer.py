@@ -70,9 +70,9 @@ class Style:
             return self
         return Style(
             h_align= self.h_align or other.h_align,
-            bold= self.bold or other.bold,
-            italic= self.italic or other.italic,
-            underline= self.underline or other.underline,
+            bold= self.bold if self.bold is not None else other.bold,
+            italic= self.italic if self.italic is not None else other.italic,
+            underline= self.underline if self.underline is not None else other.underline,
             fg_color= self.fg_color or other.fg_color,
             bg_color= self.bg_color or other.bg_color,
             prefix= self.prefix or other.prefix,
@@ -92,6 +92,12 @@ class Style:
 
 class ConditinalStyle:
     cond: Callable[[Any], bool]
+    style: Style
+
+
+@dataclass
+class RowConditionalStyle:
+    cond: Callable[[RowRecord], bool]
     style: Style
 
 
@@ -164,6 +170,7 @@ class Table:
     display_column_keys: list[str]
     header_mapping: dict[str, CellOrValue]|None = None
     footer_mapping: dict[str, CellOrValue]|None = None
+    row_conditional_styles: list[RowConditionalStyle]|None = None
 
 
 @dataclass

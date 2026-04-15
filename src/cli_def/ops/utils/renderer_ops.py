@@ -13,6 +13,7 @@ from .renderer import (
     Table,
     CellOrValue,
     ColumnOrKey,
+    RowConditionalStyle,
 )
 
 
@@ -27,6 +28,7 @@ class TableBuilder:
         display_column_keys: Iterable[str]|None = None,
         headers: Iterable[CellOrValue]|None = None,
         footers: Iterable[CellOrValue]|None = None,
+        row_conditional_styles: Iterable[RowConditionalStyle]|None = None,
     ) -> Table:
 
         columns = cls.normalize_columns(columns)
@@ -59,6 +61,7 @@ class TableBuilder:
             display_column_keys=display_column_keys,
             header_mapping=header_mapping,
             footer_mapping=footer_mapping,
+            row_conditional_styles=list(row_conditional_styles) if row_conditional_styles is not None else None
         )
         return result
 
@@ -72,6 +75,7 @@ class TableBuilder:
         display_column_keys: Iterable[str]|None = None,
         headers: Iterable[CellOrValue]|None = None,
         footers: Iterable[CellOrValue]|None = None,
+        row_conditional_styles: Iterable[RowConditionalStyle]|None = None,
     ) -> Table:
         columns = cls.normalize_columns(columns)
         column_mapping = {
@@ -108,6 +112,7 @@ class TableBuilder:
             display_column_keys=display_column_keys,
             header_mapping=header_mapping,
             footer_mapping=footer_mapping,
+            row_conditional_styles=list(row_conditional_styles) if row_conditional_styles is not None else None
         )
         return result
 

@@ -24,7 +24,7 @@ def main(argv: Sequence[str]|None=None):
     assert cli_def is not None
     runner = CliRunner(
         cli_def,
-        use_early_parse=True,
+        handle_early_parse=True,
         fallback_handler=print_handler
     )
 

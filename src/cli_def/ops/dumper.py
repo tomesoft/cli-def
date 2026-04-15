@@ -20,6 +20,7 @@ from .utils.renderer import (
     RowType,
     Cell,
     Table,
+    RowConditionalStyle,
 )
 
 
@@ -134,9 +135,10 @@ class CliDefDumper:
                         cell = None
                 elif col_key == cls.COL_BOUND:
                     if bound := getattr(node, "bound_params", None):
-                        cell = f"{bound!r}"
+                        #cell = f"{bound!r}"
+                        cell = ", ".join([f"{k}={v}" for k, v in bound.items()])
                     elif getattr(node, "has_bound_value", False):
-                        cell = f"{getattr(node, "bound_value")}"
+                        cell = f"(fixed: {getattr(node, "bound_value")})"
                     else:
                         cell = None
                 else:
@@ -171,11 +173,23 @@ class CliDefDumper:
             Cell(col_key.upper(), Style(fg_color="cyan"))
             for col_key in col_keys
         ]
+        def is_bound_argument(row: RowRecord) -> bool:
+            if row.cell_mapping and row.cell_mapping.get("cls") == "arg":
+                if row.cell_mapping.get("bound") is not None:
+                    return True
+            return False
+        row_conditional_styles = [
+            RowConditionalStyle(
+                is_bound_argument,
+                Style(bold=False, fg_color="bright_black")
+            )
+        ]
         table = TableBuilder.from_row_records(
             columns=col_keys,
             row_records=row_records,
             display_column_keys=col_keys,
             headers=headers,
+            row_conditional_styles=row_conditional_styles,
         )
         table.row_records.insert(
             0,
@@ -218,8 +232,6 @@ class CliDefDumper:
                             bold=True,
                             #underline=True,
                             ).merge(row.default_style)
-                # if row.get_raw_value("cls", None) == "arg":
-                #     row.default_style = Style(fg_color="cyan")
         return table
 
 

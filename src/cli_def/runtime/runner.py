@@ -40,7 +40,7 @@ class CliRunner:
             default_backend: str="argparse",
             default_ctx: CliRuntimeContext|None = None,
             session: CliSession|None = None,
-            use_early_parse: bool = False,
+            handle_early_parse: bool = False,
             ):
         self.cli_def = cli_def
         self.fallback_handler = fallback_handler
@@ -48,7 +48,7 @@ class CliRunner:
         self.backend: str|None = None
         self.default_ctx = default_ctx
         self.session = session
-        self._use_early_parse: bool = use_early_parse
+        self._handle_early_parse: bool = handle_early_parse
 
         self.cli_def_resolved: ResolvedCliDef = CliDefResolver().resolve(self.cli_def)
         self.ctx: CliRuntimeContext|None = None
@@ -64,7 +64,7 @@ class CliRunner:
         argv = self._normalize_argv(argv)
         #print("@@@2")
 
-        if self._use_early_parse:
+        if self._handle_early_parse:
             early_args, remaining = self._early_parse(argv)
             logging.debug(f"@@@@ early_args:{early_args}, remaining:{remaining}")
 

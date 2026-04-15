@@ -26,5 +26,6 @@ inherit_from = ["greet"]
 bind = {"name" = "John"}
 
 [cli.greet-john-loud]
+help = "Greet John loudly"
 inherit_from = ["greet"]
 bind = {name = "John", upper = true}

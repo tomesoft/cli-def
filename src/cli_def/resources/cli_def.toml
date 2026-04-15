@@ -36,6 +36,16 @@ args = [
 entrypoint = "cli_def.script.handlers.dump:run_dump"
 
 # --------------------------------------------------------------------------------
+# validate command
+# --------------------------------------------------------------------------------
+[cli.validate]
+help = "Validate cli-def AST"
+args = [
+    {key="cli_def_file", mult="1", type="str"},
+]
+entrypoint = "cli_def.script.handlers.validate:run_validate"
+
+# --------------------------------------------------------------------------------
 # run command
 # --------------------------------------------------------------------------------
 [cli.run]

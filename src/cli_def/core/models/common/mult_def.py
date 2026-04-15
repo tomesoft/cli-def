@@ -25,6 +25,12 @@ class MultDef:
     def is_optional(self) -> bool:
         return self.lower == 0 and self.upper == 1
 
+    def accepts_len(self, mul: int) -> bool:
+        if mul < self.lower:
+            return False
+        if self.upper is not None and self.upper < mul:
+            return False
+        return True
 
     @classmethod
     def from_any(cls, val: Any) -> MultDef:
