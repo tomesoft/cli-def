@@ -20,7 +20,8 @@ args =  [ # common args for the same layer commands
 
 [cli.command1]
 help = "HELP of command1"
-# command1 inherits arguments from "_command_templ_1" and "_command_templ_2" implicitly
+inherit_from = ["*"]
+# command1 inherits arguments from "_command_templ_1" and "_command_templ_2" 
 
 [cli.command2]
 help = "HELP of command2"

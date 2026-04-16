@@ -23,7 +23,8 @@ args =  [
 
 [cli.command1.subcommand1_1]
 help = "HELP of subcommand1_1"
-# subcommand1_1 inherits arguments from template "command1/_subcommand_templ_{1,2}" implicitly
+inherit_from = ["*"]
+# subcommand1_1 inherits arguments from template "command1/_subcommand_templ_{1,2}"
 
 [cli.command1.subcommand1_2]
 help = "HELP of subcommand1_2"
@@ -51,11 +52,13 @@ args =  [
 
 [cli.command2.subcommand2_1]
 help = "HELP of subcommand2_1"
+inherit_from = ["*"]
 # subcommand2_1 inherits arguments from template "command2/_subcommand"
 bind = {"positional_param2" = "fixed2_1"}
 
 [cli.command2.subcommand2_2]
 help = "HELP of subcommand2_2"
+inherit_from = ["*"]
 # subcommand2_1 inherits arguments from template "command2/_subcommand"
 bind = {"positional_param2" = "fixed2_2"}
 

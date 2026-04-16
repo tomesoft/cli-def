@@ -12,7 +12,7 @@ from cli_def.core.parser import (
     CliDefParser,
 )
 from cli_def.core.resolver import CliDefResolver
-from cli_def.core.validator import CliDefValidator, CliDefValidationError
+from cli_def.core.validator import CliDefValidator, CliDefValidationCode
 
 def data_path() -> Path:
     return Path(__file__).parent.parent.parent.parent / "data"
@@ -121,10 +121,11 @@ def test_cli_def_validator_validate(validation_cli_def_path):
     validator.validate_cli(resolved)
 
     assert validator.has_errors, [str(r) for r in validator.records]
-    assert len(validator.records) == 4, [str(r) for r in validator.records]
+    assert len(validator.records) == 5, [str(r) for r in validator.records]
 
 
-    assert CliDefValidationError.E_ARG_BOUND_VALUE_TYPE_ERROR in validator.errors
-    assert CliDefValidationError.E_ARG_BOUND_VALUE_NOT_IN_CHOICES in validator.errors
-    assert CliDefValidationError.E_ARG_BOUND_VALUE_MULT_ERROR in validator.errors
+    assert CliDefValidationCode.E_ARG_BOUND_TYPE_ERROR in validator.errors
+    assert CliDefValidationCode.E_ARG_NOT_IN_CHOICES in validator.errors
+    assert CliDefValidationCode.E_ARG_MULT_ERROR in validator.errors
+    assert CliDefValidationCode.W_CMD_UNUSED_BIND in validator.errors
 

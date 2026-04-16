@@ -298,9 +298,6 @@ class CommandDef(
                     if node.key == self.EARLY:
                         continue
                     templates.append(node)
-        if self.inherit_from is None:
-            return templates
-        inherit_set = set(self.inherit_from)
-        return [tmpl for tmpl in templates if tmpl.key in inherit_set]
+        return templates
 
 

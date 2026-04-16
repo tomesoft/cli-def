@@ -18,24 +18,25 @@ args =  [ # common args for the same layer commands
 
 [cli.command1]
 help = "HELP of command1"
-# command1 inherits arguments from "_command_templ_1" and "_command_templ_2" implicitly
-bind = {flag_option="WRONG_VALUE"} # wrong type
+inherit_from = ["*"] # command1 inherits arguments from "_command_templ_1" and "_command_templ_2"
+bind = {flag_option="WRONG_VALUE"} # error#1 wrong type
 
 [cli.command2]
 help = "HELP of command2"
 inherit_from = ["_command_templ_1", "_command_templ_2"] # command2 inherits arguments from "_command_tmpl_1" and "_command_tmpl_2" explicitly
-bind = {optional_option=99} # wrong type
+bind = {optional_option=99} #error#2  wrong type
 
 [cli.command3]
 help = "HELP of command3"
 inherit_from = ["_command_templ_2"] # command3 inherits arguments from "_command_tmpl_2" only
-bind = {choice_option="ZZZ"} # wrong choice
+bind = {choice_option="ZZZ"} # error#3 wrong choice
 
 [cli.command4]
 help = "HELP of command4"
 inherit_from = [] # command4 defys inheritance
+bind = {positional_param1="invalid_binding"} # warning#1 invalid binding
 
 [cli.command5]
 help = "HELP of command5"
 inherit_from = ["_command_templ_1"]
-bind = {positional_param1=["a", "b"]} # wrong mult
+bind = {positional_param1=["a", "b"]} # error#4 wrong mult

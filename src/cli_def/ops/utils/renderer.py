@@ -90,8 +90,9 @@ class Style:
         )
 
 
-class ConditinalStyle:
-    cond: Callable[[Any], bool]
+@dataclass
+class ColumnConditinalStyle:
+    cond: Callable[[Any, RowRecord], bool]
     style: Style
 
 
@@ -113,6 +114,7 @@ class Column:
     key: str
     col_type: ColumnType = ColumnType.NORMAL
     default_style: Style|None = None
+    conditional_styles: list[ColumnConditinalStyle]|None = None
 
     def __post_init__(self):
         if self.default_style is None:

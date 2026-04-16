@@ -3,10 +3,14 @@
 
 from .validator import (
     CliDefValidator,
-    CliDefValidationError,
+    CliDefValidationCode,
+    CliDefValidationLevel,
+    CliDefValidationCategory,
 )
 
 __all__ = [
     "CliDefValidator",
-    "CliDefValidationError"
+    "CliDefValidationCode",
+    "CliDefValidationLevel",
+    "CliDefValidationCategory",
 ]

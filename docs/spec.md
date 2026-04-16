@@ -124,7 +124,6 @@ Commands that define subcommands are considered containers and cannot be inherit
 
 Attempting to inherit from a non-leaf command results in an error.
 
-If inherit_from is not specified, templates are applied implicitly
 
 ### 5.2 Inheritance Order
 
@@ -143,6 +142,21 @@ Later entries override earlier ones.
 Inheritance is resolved only one level deep.
 
 Transitive inheritance is not applied.
+
+### 5.4 Inheritance semantics
+
+inherit_from semantics:
+
+- Not specified: no inheritance
+- ["*"]&#58; inherit all templates in same level
+- ["name"]&#58; inherit specific templates
+- Paths support relative/absolute
+
+inherit_from supports:
+
+- absolute path (/...)
+- relative path (./, ../)
+- local name (same level)
 
 ## 6. Parameter Binding（Partial Application）
 

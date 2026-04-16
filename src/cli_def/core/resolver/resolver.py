@@ -36,11 +36,11 @@ class CliDefResolver:
             return cli_def
 
         basepath = cli_def.source.parent
-        print(f"@@@@ include base path = {basepath}")
+        logging.debug(f"@@@@ include base path = {basepath}")
         paths = []
         for file in cli_def.include:
             path = basepath / file
-            print(f"@@@@ include path = {path}")
+            logging.debug(f"@@@@ include path = {path}")
             if path == cli_def.source:
                 continue
             paths.append(path)
@@ -176,7 +176,7 @@ class CliDefResolver:
 
 
     def resolve_predecessor(self, cmdDef: CommandDef, keyOrPath: str) -> CommandDef|None:
-        if keyOrPath.startswith("/") and self.defpath_mapping: # means path specified
+        if keyOrPath.startswith("/") and self.defpath_mapping: # means full path specified
             node = self.defpath_mapping.get(keyOrPath, None)
             if node is None:
                 return None
@@ -185,38 +185,72 @@ class CliDefResolver:
                 assert node.key != cmdDef.key
                 return node
             return None
-        else:
-            if cmdDef.parent:
-                for node in cmdDef.parent.iter_children():
-                    if node == cmdDef:
-                        continue # reject itself
-                    if node.key == cmdDef.key:
-                        continue # reject of same key
-                    if isinstance(node, CommandDef) and node.key == keyOrPath:
-                        return node
+        # else:
+        #     if cmdDef.parent:
+        #         for node in cmdDef.parent.iter_children():
+        #             if node == cmdDef:
+        #                 continue # reject itself
+        #             if node.key == cmdDef.key:
+        #                 continue # reject of same key
+        #             if isinstance(node, CommandDef) and node.key == keyOrPath:
+        #                 return node
+        # return None
+        return self.resolve_relpath(cmdDef, keyOrPath)
+
+    
+    def resolve_relpath(self, cmdDef: CommandDef, keyOrPath: str) -> CommandDef|None:
+        parent = cmdDef.parent
+        if "/" in keyOrPath: # relpath specified
+            elements = keyOrPath.split("/")
+            for elem in elements[:-1]:
+                if elem == ".":
+                    continue
+                if elem == "..":
+                    if parent is not None:
+                        parent = parent.parent
+                    else:
+                        logging.warning("Could not reach parent further more")
+                        return None
+                else:
+                    logging.warning("relpath not supported except '..'")
+                    return None
+            keyOrPath = elements[-1]
+        if parent:
+            for node in parent.iter_children():
+                if node == cmdDef:
+                    continue
+                if node.key == cmdDef.key:
+                    continue
+                if isinstance(node, CommandDef) and node.key == keyOrPath:
+                    return node
         return None
 
 
     def get_predecessors(self, cmdDef: CommandDef) -> Sequence[CommandDef]:
-        predecessors: list[CommandDef] = []
+        candidates: list[CommandDef] = []
         if cmdDef.inherit_from:
             for keyOrPath in cmdDef.inherit_from:
+                if keyOrPath == "*":
+                    candidates.extend(cmdDef.get_templates())
+                    continue
+
                 item = self.resolve_predecessor(cmdDef, keyOrPath)
                 if item is not None and item._subcommands is None: # reject group
-                    predecessors.append(item)
+                    candidates.append(item)
                 else:
                     logging.warning(f"Could not resolve predecessor entry `{keyOrPath}` in inherit_from of CommandDef({cmdDef.defpath})")
-        else: # fully inherit from templates
-            predecessors.extend(cmdDef.get_templates())
-        return predecessors
+
+        # unique and apply override rule
+        seen: set[CommandDef] = set()
+        result: list[CommandDef] = []
+
+        for item in reversed(candidates):
+            if item not in seen:
+                seen.add(item)
+                result.append(item)
+
+        result.reverse()
+        
+        return result
 
 
-    # def bind_parameters(self, executable: ExecutableNode, resolved_):
-    #     if executable.bind is not None:
-    #         bind_mapping: dict[str, Any] = dict(executable.bind)
-    #         # if isinstance(executable, CliDef|CommandDef):
-    #         #     for argDef in executable.arguments:
-    #         #         if argDef.key in bind_mapping:
-    #         #             argDef.bound = bind_mapping.pop(argDef.key)
-    #         # re-assign remaingings 
-    #         # executable.bind = bind_mapping

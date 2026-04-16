@@ -14,7 +14,18 @@ from ...ops import (
 from ...core.resolver import CliDefResolver
 
 from ...runtime import cli_def_handler, CliHandlerResult
-from ...core.validator import CliDefValidator
+from ...core.validator import (
+    CliDefValidator,
+    CliDefValidationCode,
+    CliDefValidationLevel,
+    CliDefValidationCategory,
+)
+from cli_def.ops.utils.renderer import (
+    RowRecord,
+    RowConditionalStyle,
+    Style,
+    Cell
+)
 from cli_def.ops.utils.renderer_ops import (
     TableBuilder,
 )
@@ -52,14 +63,44 @@ def run_validate(event: CliEvent):
         msg = "No error found"
         print(msg)
         return CliHandlerResult.make_result(event, msg)
-    
+
+    # def is_error_row(row: RowRecord) -> bool:
+    #     if row.cell_mapping is not None:
+    #         return (row.cell_mapping.get("level") == CliDefValidationLevel.ERROR)
+    #     return False
+
+    # def is_warning_row(row: RowRecord) -> bool:
+    #     if row.cell_mapping is not None:
+    #         return (row.cell_mapping.get("level") == CliDefValidationLevel.WARNING)
+    #     return False
+
+    def make_level_cell(level: CliDefValidationLevel) -> Cell:
+        return Cell(level, Style(fg_color="red" if level == CliDefValidationLevel.ERROR else "yellow"))
+
     table = TableBuilder.from_columns_and_values(
-        columns=["#", "defpath", "error"],
-        valuess=[["---"]] + [(r.node.defpath, r.error) for r in validator.records],
-        headers=["defpath", "error"]
+        columns=["#", "defpath", "category", "level", "code", "message"],
+        valuess=[(
+            r.node.defpath,
+            r.code.category,
+            make_level_cell(r.code.level),
+            r.code.name,
+            r.message,
+            ) for r in validator.records
+        ],
+        # row_conditional_styles=[
+        #     RowConditionalStyle(cond=is_error_row, style=Style(fg_color="red")),
+        #     RowConditionalStyle(cond=is_warning_row, style=Style(fg_color="yellow")),
+        # ]
     )
 
-    print(f"{len(validator.records)} errors found.")
+
+    errors = [r for r in validator.records if r.code.level == CliDefValidationLevel.ERROR]
+    warnings = [r for r in validator.records if r.code.level == CliDefValidationLevel.WARNING]
+
+    print(
+        f" Validation failed: {len(errors)} error(s), {len(warnings)} warning(s)"
+    )
+    print()
     for text in PrettyRenderer().render_table(table):
         print(text)
 

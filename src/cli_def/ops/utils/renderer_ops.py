@@ -76,6 +76,8 @@ class TableBuilder:
         headers: Iterable[CellOrValue]|None = None,
         footers: Iterable[CellOrValue]|None = None,
         row_conditional_styles: Iterable[RowConditionalStyle]|None = None,
+        header_compositions: Iterable[RowType] | None = None,
+        footer_compositions: Iterable[RowType] | None = None,
     ) -> Table:
         columns = cls.normalize_columns(columns)
         column_mapping = {
@@ -99,12 +101,21 @@ class TableBuilder:
             }
         else:
             footer_mapping = None
+        
+        if header_compositions is None:
+            header_compositions = [RowType.HEADER, RowType.SEPARATOR]
+        if footer_compositions is None:
+            footer_compositions = []
 
         normal_column_keys = [col.key for col in columns if col.col_type == ColumnType.NORMAL]
         rows: list[RowRecord] = []
+        for h in header_compositions:
+            rows.append(RowRecord(row_type=h))
         for values in valuess:
             row = cls.make_row(normal_column_keys, values)
             rows.append(row)
+        for f in footer_compositions:
+            rows.append(RowRecord(row_type=f))
 
         result = Table(
             column_mapping=column_mapping,

@@ -221,7 +221,7 @@ def test_cli_def_parser_command_w_template(command_w_template_cli_def_path):
     assert cmd1.defpath == "/MyCLI/command1"
     assert cmd1.help == "HELP of command1"
     assert not cmd1.is_template
-    assert cmd1.inherit_from is None
+    assert cmd1.inherit_from == ["*"]
     assert len(cmd1.arguments) == 0
     assert cmd2.key == "command2"
     assert cmd2.defpath == "/MyCLI/command2"
@@ -439,7 +439,7 @@ def test_cli_def_parser_subcommand_w_template(subcommand_w_template_cli_def_path
     assert subcmd1_1.defpath == "/MyCLI/command1/subcommand1_1"
     assert subcmd1_1.deflevel == 2
     assert subcmd1_1.help == "HELP of subcommand1_1"
-    assert subcmd1_1.inherit_from is None
+    assert subcmd1_1.inherit_from == ["*"]
     assert len(subcmd1_1.arguments) == 0
     assert subcmd1_2.key == "subcommand1_2"
     assert subcmd1_2.defpath == "/MyCLI/command1/subcommand1_2"
