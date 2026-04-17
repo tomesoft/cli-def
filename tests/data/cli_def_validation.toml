@@ -3,7 +3,6 @@
 [cli] # cli[.<command>[.<subcommand>]]
 key = "MyCLI"
 help = "for validation test"
-group = "command"
 
 [cli._command_templ_1] # startswith "_" means command template
 args =  [ # common args for the same layer commands
@@ -40,3 +39,24 @@ bind = {positional_param1="invalid_binding"} # warning#1 invalid binding
 help = "HELP of command5"
 inherit_from = ["_command_templ_1"]
 bind = {positional_param1=["a", "b"]} # error#4 wrong mult
+
+[cli.command6]
+help = "HELP of command6"
+args =  [ # error#5 "--option" duplicate
+    {key = "optional_option2", option = "--option", mult = "?", type = "str"},
+]
+inherit_from = ["_command_templ_1"]
+
+[cli.command7]
+help = "HELP of command7"
+args =  [ # error#6 alias "-O" confilict
+    {key = "optional_option1", option = "--option1", aliases=["-O"], mult = "?", type = "str"},
+    {key = "optional_option2", option = "--option2", aliases=["-O"], mult = "?", type = "str"},
+]
+
+[cli.command8]
+help = "HELP of command8"
+args =  [ # error#6 alias "-O" confilict
+    {key = "positional_option", mult = "*", type = "str"},
+]
+bind = {positional_option=["a", "b", "c", "d"]}

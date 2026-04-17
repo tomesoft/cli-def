@@ -51,7 +51,7 @@ def run_run(event: CliEvent):
     else:
         child_ctx = None
 
-    print(f"[run] forwarding args: {event.extra_args}, no_ctx_propagate: {no_ctx_propagate}")
+    logging.info(f"[run] forwarding args: {event.extra_args}, no_ctx_propagate: {no_ctx_propagate}")
     runner = CliRunner(
         cli_def,
         fallback_handler=print_handler,
@@ -61,7 +61,7 @@ def run_run(event: CliEvent):
     result = runner.run(
         argv=event.extra_args if event.extra_args else [],
     )
-
+    #print(f"@@@ run_run result = {result!r}")
     return CliHandlerResult.make_result(
         event,
         "run_run",

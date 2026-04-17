@@ -96,6 +96,7 @@ class CliDispatcher:
         )
         handler = self._resolve_handler(event.command) or self.fallback_handler
         result =  handler(event)
+        #print(f"@@@@@ result = {result!r}")
         return self.normalize_result(result, event)
 
 

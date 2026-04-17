@@ -1,5 +1,5 @@
 # cli_def/backend/click/click_builder.py
-from typing import Any, Mapping, Iterable
+from typing import Any, Mapping, Iterable, Sequence
 try:
     import click
 except ImportError:
@@ -96,7 +96,11 @@ class ClickBuilder(BuilderProtocol):
 
 
     def _build_command(self, cmdDef: ResolvedCommandDef) -> click.Command:
-        params = [self._build_param(arg) for arg in cmdDef.arguments]
+        params = [
+            self._build_param(arg)
+            for arg in cmdDef.arguments
+            if not arg.has_bound_value
+        ]
         # collect arguments from template
         # for tmpl_cmd in cmdDef.get_templates():
         #     params.extend([self._build_param(arg) for arg in tmpl_cmd.arguments])
@@ -143,13 +147,14 @@ class ClickBuilder(BuilderProtocol):
                 is_flag=arg.is_flag or False,
             )
             param.name = arg.key
+            self.apply_mult(param, arg.mult)
         else:
             # positional
+            kwargs = self.to_kwargs_for_positional(arg.mult)
             param = click.Argument(
                 param_decls=[arg.key],
-                #nargs=self.to_nargs(arg.mult),
+                **kwargs
             )
-            self.apply_mult(param, arg.mult)
 
         self._register(arg, param)
 
@@ -171,6 +176,8 @@ class ClickBuilder(BuilderProtocol):
             arguments: Iterable[ResolvedArgumentDef]
         ):
         for arg in arguments or []:
+            if arg.has_bound_value:
+                continue
             cmd.params.append(self._build_param(arg))
 
 
@@ -181,3 +188,12 @@ class ClickBuilder(BuilderProtocol):
             param.multiple = True
         elif mult.is_optional:
             param.nargs = 1
+
+    def to_kwargs_for_positional(self, mult: MultDef) -> dict[str, Any]:
+        if mult.is_fixed:
+            return {"nargs": mult.lower, "required": True}
+        elif mult.is_optional:
+            return {"nargs": 1, "required": False}
+        elif mult.is_unbounded:
+            return {"nargs": -1, "required": mult.lower != 0}
+        return {"nargs": 1} # TODO

@@ -74,9 +74,9 @@ class CliRunner:
             self.ctx = self._make_context()
 
         #print("@@@3")
-        if self._should_show_help(argv):
-            self._show_help()
-            return CliResult([], exit_code=1)
+        # if self._should_show_help(argv):
+        #     self._show_help()
+        #     return CliResult([], exit_code=1)
 
         #print("@@@4")
         self._setup_runtime()
@@ -86,7 +86,7 @@ class CliRunner:
 
         #print("@@@6")
         handler_result = self._execute_backend(remaining)
-        #print(f"@@@ hander_result = {type(handler_result)}, datatype={type(handler_result.data)}")
+        #print(f"@@@ hander_result type = {type(handler_result)}")
         #print("@@@7")
         if self.session:
             self.session.result_store.add(handler_result)
@@ -95,6 +95,10 @@ class CliRunner:
 
 
     def compute_exit_code(self, results: Iterable[CliHandlerResult]):
+        results = list(results)
+        if len(results) == 1 and isinstance(results[0], int):
+            # click returns 2 when parser error happened
+            return results[0]
         for r in results:
             if r.kind == CliHandlerResultKind.FAILED:
                 return 1
@@ -151,12 +155,12 @@ class CliRunner:
         return backend or "argparse"
 
 
-    def _execute_backend(self, argv: Sequence[str]):
+    def _execute_backend(self, argv: Sequence[str]) -> Any:
         if self.backend == "click":
-            logging.info("[click] backend")
+            logging.info(f"[click] backend argv:{argv!r}")
             return self._execute_click(argv)
 
-        logging.info("[argparse] backend")
+        logging.info(f"[argparse] backend argv:{argv!r}")
         return self._execute_argparse(argv)
 
 
@@ -179,8 +183,10 @@ class CliRunner:
         binder.bind(builder.defpath_mapping)
 
         try:
+            args=list(argv) if argv is not None else None
+            #print(f"@@@ argv = {args!r}")
             result = root(
-                args=list(argv) if argv is not None else None,
+                args=args,
                 standalone_mode=False,
             )
 
@@ -192,12 +198,13 @@ class CliRunner:
 
         except click.exceptions.ClickException as e:
             e.show()
+            #print(f"@@@ click.exception {e.exit_code}")
             return e.exit_code
 
     def _normalize_result(self, results: Iterable[CliHandlerResult]) -> CliResult:
         exit_code = self.compute_exit_code(results)
         result = CliResult(
             exit_code=exit_code,
-            results=list(results)
+            results=list(results) if exit_code < 2 else []
         )
         return result

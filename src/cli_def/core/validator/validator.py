@@ -34,8 +34,9 @@ class CliDefValidationCode(Enum):
     E_ARG_NOT_IN_CHOICES = (auto(), CliDefValidationCategory.ARG, CliDefValidationLevel.ERROR)
     E_ARG_MULT_ERROR = (auto(), CliDefValidationCategory.ARG, CliDefValidationLevel.ERROR)
 
+    E_CMD_DUPLICATE_OPTION = (auto(), CliDefValidationCategory.CMD, CliDefValidationLevel.ERROR)
+    E_CMD_CONFLICT_ALIAS = (auto(), CliDefValidationCategory.CMD, CliDefValidationLevel.ERROR)
     W_CMD_UNUSED_BIND = (auto(), CliDefValidationCategory.CMD, CliDefValidationLevel.WARNING)
-    W_DUPLICATE_OPTION = (auto(), CliDefValidationCategory.CMD, CliDefValidationLevel.WARNING)
 
     def __init__(self, id, category, level):
         self.id = id
@@ -131,6 +132,41 @@ class CliDefValidator:
                         f"{k!r} target not found"
                     )
                 )
+        seen_options: set[str] = set()
+        for arg in cmd.arguments:
+            if arg.option is None:
+                continue
+            if arg.has_bound_value:
+                continue
+            if arg.option not in seen_options:
+                seen_options.add(arg.option)
+            else:
+                self._register(
+                    CliDefValidationRecord(
+                        CliDefValidationCode.E_CMD_DUPLICATE_OPTION,
+                        cmd,
+                        f"dupliate option '{arg.option}'"
+                    )
+                )
+
+        seen_aliases: set[str] = set()
+        for arg in cmd.arguments:
+            if arg.aliases == []:
+                continue
+            if arg.has_bound_value:
+                continue
+            for alias in arg.aliases:
+                if alias not in seen_aliases:
+                    seen_aliases.add(alias)
+                else:
+                    self._register(
+                        CliDefValidationRecord(
+                            CliDefValidationCode.E_CMD_CONFLICT_ALIAS,
+                            cmd,
+                            f"conflict alias '{alias}'"
+                        )
+                    )
+
 
         # 2 check arguments
         for arg in cmd.arguments:
@@ -173,7 +209,6 @@ class CliDefValidator:
                         f"{bound_value!r} can not accept mult {arg.mult.to_tuple()}",
                     )
                 )
-        # 2) 
 
 
     def check_arg_type(self, val: Any, type: str|None) -> bool:

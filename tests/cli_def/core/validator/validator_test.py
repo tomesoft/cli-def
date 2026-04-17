@@ -121,11 +121,12 @@ def test_cli_def_validator_validate(validation_cli_def_path):
     validator.validate_cli(resolved)
 
     assert validator.has_errors, [str(r) for r in validator.records]
-    assert len(validator.records) == 5, [str(r) for r in validator.records]
-
+    assert len(validator.records) == 7, [str(r) for r in validator.records]
 
     assert CliDefValidationCode.E_ARG_BOUND_TYPE_ERROR in validator.errors
     assert CliDefValidationCode.E_ARG_NOT_IN_CHOICES in validator.errors
     assert CliDefValidationCode.E_ARG_MULT_ERROR in validator.errors
     assert CliDefValidationCode.W_CMD_UNUSED_BIND in validator.errors
+    assert CliDefValidationCode.E_CMD_DUPLICATE_OPTION in validator.errors
+    assert CliDefValidationCode.E_CMD_CONFLICT_ALIAS in validator.errors
 
