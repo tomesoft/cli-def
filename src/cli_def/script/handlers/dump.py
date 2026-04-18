@@ -2,6 +2,9 @@
 from __future__ import annotations
 from typing import Sequence, Any
 import logging
+from pathlib import Path
+
+from ...basic.basic_types import PathLike
 
 from ...runtime import (
     CliEvent,
@@ -11,6 +14,8 @@ from ...ops import (
     load_cli_def_path,
     CliDefDumper,
 )
+from ...ops.utils.renderer import Table
+
 from ...core.resolver import CliDefResolver
 
 from ...runtime import cli_def_handler, CliHandlerResult
@@ -31,14 +36,37 @@ def run_dump(event: CliEvent):
     logging.info("=== dump command ===")
 
     cli_def_file = event.params.get("cli_def_file")
-
-    assert cli_def_file is not None
-    cli_def = load_cli_def_path(cli_def_file)
-    if cli_def is None:
+    assert cli_def_file
+    cli_def_file = Path(cli_def_file)
+    if not cli_def_file.exists():
         return CliHandlerResult.make_error(
             event,
             f"cli_def could not load: {cli_def_file}",
         )
+
+    table = dump_cli_def(
+        cli_def_file,
+        as_help=as_help,
+        show_resolved=show_resolved,
+    )
+
+    return CliHandlerResult.make_result(
+        event,
+        "run_dump",
+        data=table
+    )
+
+
+def dump_cli_def(
+        cli_def_file: PathLike,
+        *,
+        as_help: bool,
+        show_resolved: bool,
+        row_offset: int|None = None,
+    ) -> Table:
+
+    cli_def = load_cli_def_path(cli_def_file)
+    assert cli_def
 
     if show_resolved:
         logging.debug("@@@ RESOLVE @@@")
@@ -48,11 +76,9 @@ def run_dump(event: CliEvent):
     # table = CliDefDumper.dump(cli_def)
     # if check_entrypoints:
 
-    table = CliDefDumper.dump_pretty(cli_def, as_help=as_help, as_resolved=show_resolved)
-
-    return CliHandlerResult.make_result(
-        event,
-        "run_dump",
-        data=table
-    )
-
+    table = CliDefDumper.dump_pretty(
+        cli_def,
+        as_help=as_help,
+        as_resolved=show_resolved,
+        row_offset=row_offset)
+    return table

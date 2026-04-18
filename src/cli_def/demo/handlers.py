@@ -18,7 +18,7 @@ from cli_def.ops.dumper import CliDefDumper
 # demo handler
 # load profiles and go repl
 # --------------------------------------------------------------------------------
-@cli_def_handler("/cli-def/demo", late_binding=True)
+@cli_def_handler("/cli-def/demo", late_binding=True, description="builtin demo command handler")
 def run_demo(event: CliEvent):
     profile = event.params.get("profile") or "beginner"
 

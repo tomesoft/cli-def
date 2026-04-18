@@ -25,6 +25,7 @@ from ...ops.utils.renderer import (
     Cell,
     Table,
 )
+from ...ops.utils.renderer_ops import TableBuilder
 from ...ops.utils.pretty_renderer import PrettyRenderer
 
 from ...runtime import cli_def_handler, CliHandlerResult
@@ -41,7 +42,8 @@ from ...runtime.scanner import CliHandlerScanner
 def run_search(event: CliEvent):
     logging.info("=== search command ===")
     dir_to_search = event.params.get("directory_to_search")
-    recursive = event.params.get("recursive")
+    recursive = event.params.get("recursive") or False
+    dump_all = event.params.get("dump_all") or False
 
     assert dir_to_search
     path = Path(dir_to_search)
@@ -64,7 +66,7 @@ def run_search(event: CliEvent):
             continue
         mapping[toml] = cli_def
 
-    pretty_report(event, mapping)
+    pretty_report(event, mapping, dump_all=dump_all)
 
     return CliHandlerResult.make_result(
         event,
@@ -73,44 +75,60 @@ def run_search(event: CliEvent):
     )
 
 
-def pretty_report(event: CliEvent, mapping: Mapping[Path, CliDef]):
-    dump_all = event.params.get("dump_all")
+from .dump import dump_cli_def
 
-    columns = [
-        Column("#", col_type=ColumnType.INDEX1, default_style=Style(h_align="right")),
-        Column("path", default_style=Style()),
-        #Column("|", col_type=ColumnType.SEPARATOR),
-        Column("cli_key"),
-        Column("cli_help"),
-        Column("nodes_count", default_style=Style(h_align="right")),
-    ]
-    column_mapping = {col.key: col for col in columns}
-    display_column_keys = list(column_mapping.keys())
+def pretty_report(event: CliEvent, mapping: Mapping[Path, CliDef], *, dump_all: bool):
 
-    row_records: list[RowRecord] = []
-    row_records.append(RowRecord(row_type=RowType.HEADER_KEY))
-    row_records.append(RowRecord(row_type=RowType.SEPARATOR))
-    for k, v in mapping.items():
-        row = RowRecord(
-            cell_mapping={
-                "path": Cell(k),
-                "cli_key": v.key,
-                "cli_help": v.help,
-                "nodes_count": len(list(v.iter_all_nodes())),
-            }, #default_style=Style(bg_color="yellow")
-        )
-        row_records.append(row)
-    row_records.append(RowRecord(row_type=RowType.SEPARATOR))
+    # 1) prepare columns
+    columns = ["#", "path", "cli_key", "cli_help", "nodes_count"]
 
-    table = Table(
-        column_mapping=column_mapping,
-        row_records=row_records,
-        display_column_keys=display_column_keys,
+    # 2) prepare valuess
+    valuess: list[list[Any]] = []
+    for k in sorted(mapping.keys()):
+        v = mapping[k]
+        values = [
+            k,
+            v.key,
+            v.help,
+            len(list(v.iter_all_nodes())),
+        ]
+        valuess.append(values)
+    valuess.append(["---"]) # separator
+
+    table = TableBuilder.from_columns_and_values(
+        columns=columns,
+        valuess=valuess,
+        headers=[col.upper() for col in columns]
     )
+    table.column_mapping["nodes_count"].default_style = Style(h_align="right")
+    for header in table.get_rows_of_type(RowType.HEADER):
+        header.default_style = Style(bold=True, fg_color="cyan")
 
     renderer = PrettyRenderer()
-    for rendered_line in renderer.render_table(table):
+    rendered_lines = renderer.render_table(table)
+    rendered_headers = [
+        l for l in rendered_lines
+        if isinstance(l.source, tuple) and l.source[2].source.row_type == RowType.HEADER
+    ]
+    after_dump = False
+    for i, rendered_line in enumerate(rendered_lines):
+        if after_dump and i < len(rendered_lines) - 1:
+            for h in rendered_headers:
+                print(h)
         print(rendered_line)
+        if dump_all and isinstance(rendered_line.source, tuple):
+            sub_index, sub_lines, pre_rendered_row = rendered_line.source
+            assert isinstance(pre_rendered_row.source, RowRecord)
+            if sub_index < sub_lines -1:
+                continue
+            if pre_rendered_row.source.row_type == RowType.DATA:
+                # print(f"@@@ rendered_line.source:{pre_rendered_row.source.cell_mapping["path"]}")
+                assert pre_rendered_row.source.cell_mapping
+                path = pre_rendered_row.source.cell_mapping["path"]
+                assert path
+                dump_cli_def(path, as_help=False, show_resolved=False, row_offset=2)
+                after_dump = True
+
     print(renderer.render_text(f"[{len(mapping)} items]", Style()))
 
 

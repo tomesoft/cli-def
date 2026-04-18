@@ -155,9 +155,9 @@ def test_cli_def_resolver_command(command_cli_def_path):
 
     assert len(cmd2.arguments) == 4
 
-    def check_a1(arg: ResolvedArgumentDef):
+    def check_a1(arg: ResolvedArgumentDef, defpath_expected: str):
         assert arg.key == "positional_param1"
-        #assert arg.defpath == "/MyCLI/command2/positional_param1"
+        assert arg.defpath == defpath_expected
         assert arg.deflevel == 2
         assert arg.option == None
         assert arg.mult == MultDef(1, 1)
@@ -167,7 +167,7 @@ def test_cli_def_resolver_command(command_cli_def_path):
 
     a1 = cmd2.arguments[0]
     assert not a1.has_bound_value
-    check_a1(a1)
+    check_a1(a1, "/MyCLI/command2/positional_param1")
 
 
     def check_a2(arg: ResolvedArgumentDef):
@@ -218,7 +218,7 @@ def test_cli_def_resolver_command(command_cli_def_path):
     assert cmd4.help == "HELP of command4"
     assert cmd4.bound_params == {"positional_param1": "fixed"}
     assert len(cmd4.arguments) == 4
-    check_a1(cmd4.arguments[0])
+    check_a1(cmd4.arguments[0], "/MyCLI/command4/positional_param1")
     check_a2(cmd4.arguments[1])
     check_a3(cmd4.arguments[2])
     check_a4(cmd4.arguments[3])

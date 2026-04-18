@@ -21,8 +21,11 @@ from ...core.validator import (
     CliDefValidationCategory,
 )
 from cli_def.ops.utils.renderer import (
+    Table,
     RowRecord,
+    RowType,
     RowConditionalStyle,
+    ColumnConditinalStyle,
     Style,
     Cell
 )
@@ -64,34 +67,37 @@ def run_validate(event: CliEvent):
         print(msg)
         return CliHandlerResult.make_result(event, msg)
 
-    # def is_error_row(row: RowRecord) -> bool:
-    #     if row.cell_mapping is not None:
-    #         return (row.cell_mapping.get("level") == CliDefValidationLevel.ERROR)
-    #     return False
-
-    # def is_warning_row(row: RowRecord) -> bool:
-    #     if row.cell_mapping is not None:
-    #         return (row.cell_mapping.get("level") == CliDefValidationLevel.WARNING)
-    #     return False
-
-    def make_level_cell(level: CliDefValidationLevel) -> Cell:
-        return Cell(level, Style(fg_color="red" if level == CliDefValidationLevel.ERROR else "yellow"))
-
+    columns=["#", "defpath", "category", "level", "code", "message"]
+    valuess=[(
+        r.node.defpath,
+        r.code.category,
+        r.code.level,
+        r.code.name,
+        r.message,
+        ) for r in validator.records
+    ] + [["---"]] # separator
     table = TableBuilder.from_columns_and_values(
-        columns=["#", "defpath", "category", "level", "code", "message"],
-        valuess=[(
-            r.node.defpath,
-            r.code.category,
-            make_level_cell(r.code.level),
-            r.code.name,
-            r.message,
-            ) for r in validator.records
-        ],
+        columns=columns,
+        valuess=valuess,
+        headers=[col.upper() for col in columns]
         # row_conditional_styles=[
         #     RowConditionalStyle(cond=is_error_row, style=Style(fg_color="red")),
         #     RowConditionalStyle(cond=is_warning_row, style=Style(fg_color="yellow")),
         # ]
     )
+    for header_row in table.get_rows_of_type(RowType.HEADER):
+        header_row.default_style = Style(bold=True, fg_color="cyan")
+
+    table.column_mapping["level"].conditional_styles = [
+        ColumnConditinalStyle(
+            lambda val, _: val == CliDefValidationLevel.ERROR,
+            Style(fg_color="red")
+        ),
+        ColumnConditinalStyle(
+            lambda val, _: val == CliDefValidationLevel.WARNING,
+            Style(fg_color="yellow")
+        ),
+    ]
 
 
     errors = [r for r in validator.records if r.code.level == CliDefValidationLevel.ERROR]
@@ -104,7 +110,7 @@ def run_validate(event: CliEvent):
     for text in PrettyRenderer().render_table(table):
         print(text)
 
-
+    print(f"[{len(table.get_rows_of_type(RowType.DATA))} items]")
 
     return CliHandlerResult.make_result(
         event,

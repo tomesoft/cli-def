@@ -14,6 +14,7 @@ from .renderer import (
     CellOrValue,
     ColumnOrKey,
     RowConditionalStyle,
+    Cell,
 )
 
 

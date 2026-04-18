@@ -140,7 +140,8 @@ CellOrValue = Union[
 
 
 class RowType(Enum):
-    NORMAL = auto()
+    UNSPECIFIED = auto()
+    DATA = auto()
     TITLE = auto()
     SUBTITLE = auto()
     HEADER = auto()
@@ -152,7 +153,7 @@ class RowType(Enum):
 @dataclass
 class RowRecord:
     cell_mapping: dict[str, CellOrValue]|None = None
-    row_type: RowType = RowType.NORMAL
+    row_type: RowType = RowType.DATA
     default_style: Style|None = None
     source: Any|None = None
 
@@ -174,6 +175,10 @@ class Table:
     footer_mapping: dict[str, CellOrValue]|None = None
     row_conditional_styles: list[RowConditionalStyle]|None = None
 
+    def get_rows_of_type(self, row_type: RowType) -> Sequence[RowRecord]:
+        return [row for row in self.row_records if row.row_type == row_type]
+
+
 
 @dataclass
 class RendererContext:
@@ -181,7 +186,12 @@ class RendererContext:
 
 
 class RenderedObject(Protocol):
-    pass
+    @property
+    def source(self) -> Any|None:
+        ...
+    @property
+    def renered_value(self) -> Any|None:
+        ...
 
 
 class RendererProtocol(Protocol):

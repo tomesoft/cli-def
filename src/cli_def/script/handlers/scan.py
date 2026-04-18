@@ -26,6 +26,7 @@ from ...ops.utils.renderer import (
     ColumnType,
     RowRecord,
     RowType,
+    RowConditionalStyle,
     Cell,
     Table,
 )
@@ -120,28 +121,14 @@ def pretty_report(event: CliEvent, digest: Mapping[str, Any], entrypoint_set: se
     entrypoint_set = entrypoint_set or set()
 
     # 1) prepare columns
-    columns = [
-        Column("#", col_type=ColumnType.INDEX1, default_style=Style(h_align="right")),
-        Column("defpath"),
-        Column("entrypoint"),
-        Column("desc"),
-    ]
+    columns = ["#", "defpath", "entrypoint", "desc"]
     if check_enabled:
-        columns.append(
-            Column("is_bound")
-        )
+        columns.append("is_bound")
     if show_early:
-        columns.append(
-            Column("binding_type"),
-        )
+        columns.append("binding_type")
 
-    column_mapping = {col.key: col for col in columns}
-    display_column_keys = list(column_mapping.keys())
-
-    # 2) prepare rows
-    row_records: list[RowRecord] = []
-    row_records.append(RowRecord(row_type=RowType.HEADER_KEY))
-    row_records.append(RowRecord(row_type=RowType.SEPARATOR))
+    # # 2) prepare rows
+    valuess: list[list[Any]] = []
 
     for k in sorted(catalog.keys()):
         lst = catalog[k]
@@ -152,28 +139,40 @@ def pretty_report(event: CliEvent, digest: Mapping[str, Any], entrypoint_set: se
             binding_type = "late" if is_late_binding else "early"
             entrypoint = meta_digest.get("entrypoint")
             is_bound = entrypoint in entrypoint_set
-            row_style = Style(fg_color="green") if is_bound else None
-            row = RowRecord(
-                cell_mapping={
-                    "defpath": k,
-                    "entrypoint": entrypoint,
-                    "desc": meta_digest.get("description"),
-                    "is_bound": is_bound,
-                    "binding_type": binding_type,
-                }, default_style=row_style
-            )
-            row_records.append(row)
-    row_records.append(RowRecord(row_type=RowType.SEPARATOR))
+            # row_style = Style(fg_color="green") if is_bound else None
+            values = [
+                k,
+                entrypoint,
+                meta_digest.get("description"),
+            ]
+            if check_enabled:
+                values.append(is_bound)
+            if show_early:
+                values.append(binding_type)
+            valuess.append(values)
 
-    table = Table(
-        column_mapping=column_mapping,
-        row_records=row_records,
-        display_column_keys=display_column_keys,
+    valuess.append(["---"]) # separator
+
+    table = TableBuilder.from_columns_and_values(
+        columns=columns,
+        valuess=valuess,
+        headers=[col.upper() for col in columns]
     )
+    for header in table.get_rows_of_type(RowType.HEADER):
+        header.default_style = Style(fg_color="cyan", bold=True)
+    table.row_conditional_styles = [
+        RowConditionalStyle(
+            lambda row: (
+                row.cell_mapping is not None and
+                row.cell_mapping.get("is_bound", False) == True),
+            Style(fg_color="green")
+        )
+    ]
 
     renderer = PrettyRenderer()
     for rendered_line in renderer.render_table(table):
         print(rendered_line)
+    print(f"[{len(valuess)} items]")
     #print(renderer.render_text(f"[{len(catalog)} items]", Style()))
 
 

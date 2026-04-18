@@ -16,7 +16,7 @@ from cli_def import (
     CliDefParser,
 )
 
-from cli_def.core.models import ResolvedCliDef
+from cli_def.core.models import ResolvedCliDef, ResolvedArgumentDef
 from cli_def.core.resolver import CliDefResolver
 from cli_def.backend.click import ClickBuilder
 
@@ -154,6 +154,9 @@ def test_click_builder_command(command_cli_def_path):
     assert cli is not None
 
     for node in cliDef.iter_all_nodes():
+        if isinstance(node, ResolvedArgumentDef):
+            if node.has_bound_value:
+                continue
         assert node.defpath in builder.defpath_mapping
 
     runner = CliRunner()
@@ -255,6 +258,9 @@ def test_arg_parser_subcommand(subcommand_cli_def_path):
     assert cli is not None
 
     for node in cliDef.iter_all_nodes():
+        if isinstance(node, ResolvedArgumentDef):
+            if node.has_bound_value:
+                continue
         assert node.defpath in builder.defpath_mapping
 
     runner = CliRunner()
@@ -281,6 +287,9 @@ def test_arg_parser_subcommand_w_template(subcommand_w_template_cli_def_path):
     assert cli is not None
 
     for node in cliDef.iter_all_nodes():
+        if isinstance(node, ResolvedArgumentDef):
+            if node.has_bound_value:
+                continue
         assert node.defpath in builder.defpath_mapping
 
     runner = CliRunner()

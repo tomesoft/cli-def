@@ -23,6 +23,8 @@ from .utils.renderer import (
     RowConditionalStyle,
 )
 
+#from .utils.simple_pager import simple_pager
+
 
 class CliDefDumper:
     COL_KEY        = "key"
@@ -242,12 +244,17 @@ class CliDefDumper:
             *,
             as_help: bool=False,
             as_resolved: bool=False,
-            print_func: Callable|None = None
+            print_func: Callable|None = None,
+            row_offset: int|None = None,
         ) -> Table:
 
         table = cls.dump(cli_def, as_help=as_help, as_resolved=as_resolved)
 
-        cls.print_table(table, print_func=print_func)
+        cls.print_table(
+            table,
+            print_func=print_func,
+            row_offset=row_offset,
+            )
 
         return table
 
@@ -257,12 +264,25 @@ class CliDefDumper:
             cls,
             table: Table,
             *,
-            print_func: Callable|None = None
-    ):
+            print_func: Callable|None = None,
+            pager: bool|None = None,
+            row_offset: int|None = None,
+        ):
         print_func = print_func or print
+        if pager is None:
+            pager = True
         renderer = PrettyRenderer()
         renderer.value_formatter = lambda v: str(v) if v is not None else ""
+        if row_offset is None:
+            row_offset = 0
+        renderer.row_offset = row_offset
         rendered_seq = renderer.render_table(table)
+
         if rendered_seq:
+            # if pager:
+            #     simple_pager(rendered_seq)
+            # else:
+            #     for line in rendered_seq:
+            #         print_func(line)
             for line in rendered_seq:
-                print_func(line)
+                print_func(f"{' ' * row_offset}{line}")
