@@ -1,45 +1,4 @@
 # cli_def/core/models/raw/raw_node.py
-# from __future__ import annotations
-# from typing import Any, Mapping, TypeVar
-
-# from ..generic import AbstractCliDefNode
-# from .raw_protocols import RawCliDefNodeProtocol
-
-
-# # --------------------------------------------------------------------------------
-# # CliDefNode abstract class
-# # base class of any CliDef node
-# # --------------------------------------------------------------------------------
-# class CliDefNode(AbstractCliDefNode["CliDefNode"], RawCliDefNodeProtocol["CliDefNode"]):
-
-#     _KNOWN_FIELDS = AbstractCliDefNode._KNOWN_FIELDS
-
-#     def __init__(
-#             self,
-#             key: str,
-#             *,
-#             help: str|None = None,
-#             parent: CliDefNode|None = None,
-#             extra_defs: Mapping[str, Any]|None = None,
-#         ):
-#         super().__init__(key, help=help, parent=parent, extra_defs=extra_defs)
-
-
-
-#     def merge_missing_from(self, other: CliDefNode):
-#         if self._help is None:
-#             self._help = other.help
-#         for k, v in other.extra_defs:
-#             self._extra_defs.setdefault(k, v)
-
-
-#     def override_with(self, other: CliDefNode):
-#         if other.help is not None:
-#             self._help = other.help
-#         self._extra_defs.update(other.extra_defs)
-
-
-# cli_def/core/models/generic/cli_def_node.py
 from __future__ import annotations
 from typing import Any, Iterator, Mapping, Callable, Iterable, Sequence, Tuple
 from typing import Self, Generic, TypeVar
@@ -48,11 +7,10 @@ from .raw_protocols import (
     RawCliDefNodeProtocol,
 )
 
-#TNode = TypeVar("TNode", bound="AbstractCliDefNode")
 
 # --------------------------------------------------------------------------------
-# AbstractCliDefNode abstract class
-# base class of any CliDef node
+# CliDefNode abstract class
+# base class of any CliDef node of raw model
 # --------------------------------------------------------------------------------
 class CliDefNode(
     RawCliDefNodeProtocol,

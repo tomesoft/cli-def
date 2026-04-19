@@ -1,6 +1,6 @@
-# cli_def/script/handlers/dummy2.py
+# cli_def/demo/dummy2.py
 
-from ...runtime import (
+from ..runtime import (
     cli_def_handler,
     CliEvent,
 )

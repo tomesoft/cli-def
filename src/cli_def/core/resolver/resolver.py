@@ -1,4 +1,4 @@
-# cli_def/resolver/resolver.py
+# cli_def/core/resolver/resolver.py
 from __future__ import annotations
 from typing import Mapping, Any, Sequence
 import logging
@@ -185,16 +185,7 @@ class CliDefResolver:
                 assert node.key != cmdDef.key
                 return node
             return None
-        # else:
-        #     if cmdDef.parent:
-        #         for node in cmdDef.parent.iter_children():
-        #             if node == cmdDef:
-        #                 continue # reject itself
-        #             if node.key == cmdDef.key:
-        #                 continue # reject of same key
-        #             if isinstance(node, CommandDef) and node.key == keyOrPath:
-        #                 return node
-        # return None
+
         return self.resolve_relpath(cmdDef, keyOrPath)
 
     

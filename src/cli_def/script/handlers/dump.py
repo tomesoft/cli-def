@@ -73,9 +73,6 @@ def dump_cli_def(
         resolver = CliDefResolver()
         cli_def = resolver.resolve(cli_def)
     
-    # table = CliDefDumper.dump(cli_def)
-    # if check_entrypoints:
-
     table = CliDefDumper.dump_pretty(
         cli_def,
         as_help=as_help,

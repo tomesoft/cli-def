@@ -77,7 +77,12 @@ def run_search(event: CliEvent):
 
 from .dump import dump_cli_def
 
-def pretty_report(event: CliEvent, mapping: Mapping[Path, CliDef], *, dump_all: bool):
+def pretty_report(
+        event: CliEvent,
+        mapping: Mapping[Path, CliDef],
+        *,
+        dump_all: bool
+    ):
 
     # 1) prepare columns
     columns = ["#", "path", "cli_key", "cli_help", "nodes_count"]

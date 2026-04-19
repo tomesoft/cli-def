@@ -82,8 +82,6 @@ class CliSession(CliSessionProtocol):
 
         self._result_store = ResultStore()
 
-        # self._prompt_stack: list[str] = []
-        # self._repl_stack: list[Callable[[str], Any]] = []
         self._mode_stack: list[ReplModeRecord] = []
 
         self._build_runtime()

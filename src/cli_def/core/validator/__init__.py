@@ -1,4 +1,4 @@
-# cli_def/validator/init.py
+# cli_def/core/validator/init.py
 # package marker
 
 from .validator import (

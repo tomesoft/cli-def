@@ -2,13 +2,10 @@
 from __future__ import annotations
 from typing import Iterable, Sequence, Mapping, Iterator, Any
 
-#from cli_def.core.models.protocols import CliDefNodeProtocol
 
 from .resolved_node import ResolvedCliDefNode
 from .executable_node import ResolvedExecutableNode
 from .resolved_protocols import ResolvedCommandDefProtocol
-# from ..generic.abstract_node import AbstractCliDefNode
-# from ..generic.command_def import AbstractCommandDef
 from ..raw.command_def import CommandDef
 from .argument_def import ResolvedArgumentDef
 
@@ -16,11 +13,10 @@ from .argument_def import ResolvedArgumentDef
 
 # --------------------------------------------------------------------------------
 # ResolvedCommandDef
-# a concrete class for resolved command/subcommand representation
+# a concrete class for command/subcommand representation of resolved model
 # --------------------------------------------------------------------------------
 class ResolvedCommandDef(
     ResolvedExecutableNode,
-    # AbstractCommandDef,
     ResolvedCommandDefProtocol
     ):
 

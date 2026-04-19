@@ -1,4 +1,4 @@
-# cli_def/parsers/init.py
+# cli_def/core/parsers/init.py
 # package marker
 
 from .parser import (

@@ -91,19 +91,6 @@ def run_scan(event: CliEvent):
         n.entrypoint for n in cli_def.iter_all_nodes() if isinstance(n, CommandDef) and n.entrypoint
     } if cli_def else None
 
-    # catalog = digest["catalog_digest"]
-    # for key, lst in catalog.items():
-    #     print(f"{key}:")
-    #     indent = "    "
-    #     for meta_digest in lst:
-    #         late_binding = meta_digest.get("late_binding")
-    #         if not show_all and not late_binding:
-    #             continue
-    #         entrypoint = meta_digest.get("entrypoint")
-    #         desc = meta_digest.get("description")
-    #         bound = entrypoint in specified_entry_point_set
-    #         print(indent + f"{"*" if bound else " "}{entrypoint}, desc={desc}, late_binding={late_binding}")
-
     pretty_report(event, digest, specified_entry_point_set)
 
     return CliHandlerResult.make_result(
@@ -172,7 +159,6 @@ def pretty_report(event: CliEvent, digest: Mapping[str, Any], entrypoint_set: se
     renderer = PrettyRenderer()
     for rendered_line in renderer.render_table(table):
         print(rendered_line)
-    print(f"[{len(valuess)} items]")
-    #print(renderer.render_text(f"[{len(catalog)} items]", Style()))
+    print(f"[{len(table.get_rows_of_type(RowType.DATA))} items]")
 
 

@@ -1,4 +1,4 @@
-# cli_def/resolver/init.py
+# cli_def/core/resolver/init.py
 # package marker
 
 from .resolver import (

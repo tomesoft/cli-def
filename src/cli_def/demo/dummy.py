@@ -1,15 +1,15 @@
-# cli_def/script/handlers/dummy.py
+# cli_def/demo/dummy.py
 from __future__ import annotations
 from typing import Sequence, Any
 import logging
 import copy
 from pathlib import Path
 
-from ...runtime import (
+from ..runtime import (
     CliEvent,
 )
 
-from ...runtime import cli_def_handler, CliHandlerResult
+from ..runtime import cli_def_handler, CliHandlerResult
 
 
 

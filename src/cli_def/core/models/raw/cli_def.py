@@ -1,112 +1,4 @@
-# # cli_def/model.py
-# from __future__ import annotations
-# from typing import Sequence, Mapping, Any, Iterable, Iterator
-
-# from .raw_protocols import RawCliDefProtocol
-# from ..generic.abstract_node import AbstractCliDefNode
-# from ..generic.cli_def import AbstractCliDef
-# from .argument_def import ArgumentDef
-# from .command_def import CommandDef
-# # from .executable_node import ExecutableNode
-# # from .command_def import CommandDef
-# # from .argument_def import ArgumentDef
-
-
-# # --------------------------------------------------------------------------------
-# # CliDef
-# # a concrete class for root CLI definition
-# # --------------------------------------------------------------------------------
-# class CliDef(AbstractCliDef, RawCliDefProtocol):
-
-#     _KNOWN_FIELDS = AbstractCliDef._KNOWN_FIELDS | {
-#         "include",
-#         "bind",
-#     }
-
-#     def __init__(
-#             self,
-#             key: str,
-#             *,
-#             help: str|None = None,
-#             parent: AbstractCliDefNode|None = None,
-#             entrypoint: str|None = None,
-#             group: str|None = None,
-#             bind: Mapping[str, Any]|None = None, # for parameter binding
-#             arguments: Iterable[ArgumentDef]|None = None,
-
-#             prompt: str|None = None,
-#             commands: Iterable[CommandDef]|None = None,
-#             include: Iterable[str]|None = None,
-
-#             extra_defs: Mapping[str, Any]|None = None,
-#         ):
-#         super().__init__(
-#             key,
-#             help=help,
-#             parent=parent,
-#             prompt=prompt,
-#             commands=commands,
-#             entrypoint=entrypoint,
-#             group=group,
-#             arguments=arguments,
-#             extra_defs=extra_defs
-#             )
-#         self._include: list[str]|None = list(include) if include is not None else None
-#         self._bind: dict[str, Any] = dict(bind) if bind else {}
-
-    
-#     @property
-#     def include(self) -> Sequence[str]:
-#         return self._include or []
-
-
-#     @property
-#     def bind(self) -> Mapping[str, Any]:
-#         return self._bind
-
-
-#     def merge_missing_from(self, other: CliDef):
-#         if self._help is None:
-#             self._help = other.help
-#         for k, v in other.extra_defs:
-#             self._extra_defs.setdefault(k, v)
-
-#         if self._entrypoint is None:
-#             self._entrypoint = other.entrypoint
-#         if self._group is None:
-#             self._group = other.group
-#         if self._bind is None:
-#             if other.bind is not None:
-#                 self._bind = dict(other.bind)
-#         else:
-#             if other.bind is not None:
-#                 for k, v in other.bind.items():
-#                     self._bind.setdefault(k, v)
-
-#         if self._prompt is None:
-#             self._prompt = other.prompt
-
-#     def override_with(self, other: CliDef):
-#         if other.help is not None:
-#             self._help = other.help
-#         self._extra_defs.update(other.extra_defs)
-
-#         if other.entrypoint is not None:
-#             self._entrypoint = other.entrypoint
-#         if other.group is not None:
-#             self._group = other.group
-#         if other.bind is not None:
-#             if self._bind is None:
-#                 self._bind = dict(other.bind)
-#             else:
-#                 self._bind.update(other.bind)
-
-#         if other.prompt is not None:
-#             self._prompt = other.prompt
-
-
-
-# cli_def/model.py
+# cli_def/core/models/raw/cli_def.py
 from __future__ import annotations
 from typing import Sequence, Mapping, Any, Iterable, Iterator, TypeVar, Generic
 from pathlib import Path
@@ -122,8 +14,8 @@ from ....basic.basic_types import PathLike
 #TCmdDef = TypeVar("TCmdDef", bound="AbstractCommandDef")
 
 # --------------------------------------------------------------------------------
-# AbstractCliDef
-# an abstract class for root CLI definition
+# CliDef
+# a concrete class for root CLI definition or raw model
 # --------------------------------------------------------------------------------
 class CliDef(
     ExecutableNode,
@@ -168,12 +60,6 @@ class CliDef(
         self._commands: list[CommandDef]|None = list(commands) if commands is not None else None
         self._include: list[str]|None = list(include) if include is not None else None
         
-        # fix source
-        # self._source: Path|None = (
-        #     source if isinstance(source, Path)
-        #     else Path(source) if isinstance(source, str)
-        #     else None
-        # )
         self.set_source(source)
 
 
@@ -193,7 +79,7 @@ class CliDef(
     def source(self) -> Path|None:
         return self._source
 
-    def set_source(self, source: PathLike):
+    def set_source(self, source: PathLike|None):
         self._source: Path|None = (
             source if isinstance(source, Path)
             else Path(source) if isinstance(source, str)

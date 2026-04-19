@@ -2,13 +2,10 @@
 from __future__ import annotations
 from typing import Sequence, Mapping, Any, Iterable, Iterator
 
-#from cli_def.core.models.protocols import CliDefNodeProtocol
 
 from .resolved_protocols import ResolvedCliDefProtocol
 from .resolved_node import ResolvedCliDefNode
 from .executable_node import ResolvedExecutableNode
-# from ..generic.abstract_node import AbstractCliDefNode
-# from ..generic.cli_def import AbstractCliDef
 from .argument_def import ResolvedArgumentDef
 from .command_def import ResolvedCommandDef
 from ..raw import CliDef
@@ -16,11 +13,10 @@ from ..raw import CliDef
 
 # --------------------------------------------------------------------------------
 # ResolvedCliDef
-# a concrete class for resolved root CLI representation
+# a concrete class for root CLI representation of resolved model
 # --------------------------------------------------------------------------------
 class ResolvedCliDef(
     ResolvedExecutableNode,
-    # AbstractCliDef,
     ResolvedCliDefProtocol
     ):
 
@@ -62,11 +58,6 @@ class ResolvedCliDef(
         if self._commands:
             for n in self._commands:
                 n._parent = self
-
-    # def _normalize(self):
-    #     if self._commands:
-    #         for n in self._commands:
-    #             n._parent = self
 
     
     @property

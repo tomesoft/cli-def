@@ -5,8 +5,6 @@ from typing import Any, Iterator, Mapping, Iterable, Sequence
 
 from .resolved_node import ResolvedCliDefNode
 from .resolved_protocols import ResolvedArgumentDefProtocol
-# from ..generic.abstract_node import AbstractCliDefNode
-# from ..generic.argument_def import AbstractArgumentDef
 from ..common.mult_def import MultDef
 from ..raw.argument_def import ArgumentDef
 
@@ -14,7 +12,7 @@ from ..raw.argument_def import ArgumentDef
 
 # --------------------------------------------------------------------------------
 # ResolvedArgumentDef
-# a concrete class for resolved argument/option representation
+# a concrete class for argument/option representation of resoved model
 # --------------------------------------------------------------------------------
 class ResolvedArgumentDef(
     ResolvedCliDefNode,

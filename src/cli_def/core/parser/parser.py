@@ -1,10 +1,9 @@
-# cli_def/parsers/parser.py
+# cli_def/core/parser/parser.py
 from __future__ import annotations
 
 from typing import Mapping, Any, Iterable
 import tomllib
 from pathlib import Path
-import importlib
 import logging
 
 from ..models import (

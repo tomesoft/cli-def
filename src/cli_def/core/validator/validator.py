@@ -46,31 +46,6 @@ class CliDefValidationCode(Enum):
     def __str__(self) -> str:
         return self.name
 
-# class CliDefValidationCode(Enum):
-#     E_ERROR_START = auto()
-#     # cli_def
-#     E_CLI_START = auto()
-#     E_CLI_END = auto()
-#     # command
-#     E_CMD_START = auto()
-#     E_CMD_END = auto()
-#     # argument
-#     E_ARG_START = auto()
-#     E_ARG_BOUND_VALUE_TYPE_ERROR = auto()
-#     E_ARG_BOUND_VALUE_NOT_IN_CHOICES = auto()
-#     E_ARG_BOUND_VALUE_MULT_ERROR = auto()
-#     E_ARG_END = auto()
-#     E_ERROR_END = auto()
-
-#     W_WARNING_START = auto()
-#     W_ARG_UNUSED_BIND = auto()
-#     W_DUPLICATE_OPTION = auto()
-#     W_WARNING_END = auto()
-
-
-#     def __str__(self) -> str:
-#         return self.name
-
 
 @dataclass
 class CliDefValidationRecord:

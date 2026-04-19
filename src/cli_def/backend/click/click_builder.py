@@ -85,10 +85,8 @@ class ClickBuilder(BuilderProtocol):
 
         self._register(cliDef, root)
 
-        # 引数
         self._attach_params(root, cliDef.arguments)
 
-        # コマンド
         if cliDef.commands:
             self._attach_commands(root, cliDef.commands)
 
@@ -101,9 +99,6 @@ class ClickBuilder(BuilderProtocol):
             for arg in cmdDef.arguments
             if not arg.has_bound_value
         ]
-        # collect arguments from template
-        # for tmpl_cmd in cmdDef.get_templates():
-        #     params.extend([self._build_param(arg) for arg in tmpl_cmd.arguments])
 
         if cmdDef.subcommands:
             grp = click.Group(name=cmdDef.key, help=cmdDef.help, params=params)
@@ -124,7 +119,6 @@ class ClickBuilder(BuilderProtocol):
             help=cmdDef.help,
             params=params,
             callback=callback,
-            #hidden=cmdDef.is_template,
             context_settings={
                 "ignore_unknown_options": True,
                 "allow_extra_args": True,
@@ -140,7 +134,6 @@ class ClickBuilder(BuilderProtocol):
         if arg.option:
             # option
             param = click.Option(
-                #[arg.option, arg.key], # works but ...
                 [arg.option] + (list(arg.aliases) or []),
                 help=arg.help,
                 default=arg.default,

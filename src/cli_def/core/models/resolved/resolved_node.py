@@ -10,15 +10,13 @@ from .resolved_protocols import (
 )
 from ..raw.raw_node import CliDefNode
 
-#TNode = TypeVar("TNode", bound="AbstractCliDefNode")
 
 # --------------------------------------------------------------------------------
-# AbstractCliDefNode abstract class
-# base class of any CliDef node
+# ResolvedCliDefNode abstract class
+# base class of any CliDef node of resolved model
 # --------------------------------------------------------------------------------
 class ResolvedCliDefNode(
     ResolvedCliDefNodeProtocol,
-    #TreeViewProtocol[TNode_co],
     ):
 
     _KNOWN_FIELDS = frozenset({

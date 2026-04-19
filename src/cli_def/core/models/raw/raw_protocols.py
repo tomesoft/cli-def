@@ -1,5 +1,5 @@
 
-# cli_def/core/models/protocols.py
+# cli_def/core/models/raw/raw_protocols.py
 from __future__ import annotations
 from typing import Any, Iterator, Mapping, Callable, Iterable, Sequence
 from typing import Protocol, TypeVar, Generic, Self

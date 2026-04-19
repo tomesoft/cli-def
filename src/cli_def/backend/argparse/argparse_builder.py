@@ -197,7 +197,7 @@ class ArgparseBuilder(BuilderProtocol):
     def _attach_metadata(self, parser, command: ResolvedCommandDef|ResolvedCliDef, path):
         parser.set_defaults(
             _path=path,
-            _command=command,   # ← これも入れる（重要）
+            _command=command,
         )
 
 

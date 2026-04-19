@@ -6,12 +6,6 @@ import argparse
 import logging
 
 from .event import CliEvent
-# from ..core.models import (
-#     CliDef,
-#     ExecutableNode,
-#     CommandDef,
-#     MultDef,
-# )
 from ..core.models import (
     ResolvedCliDef,
     ResolvedExecutableNode,
@@ -48,10 +42,6 @@ class CliDispatcher:
 
 
     def _pre_load_entrypoints(self):
-        # executables = self.cli_def.select_all(
-        #     lambda node: isinstance(node, ExecutableNode)
-        #     and node.entrypoint is not None
-        # )
         entrypoints = {
             node.entrypoint for node in self.cli_def.iter_all_nodes()
             if isinstance(node, ResolvedExecutableNode) and node.entrypoint is not None
