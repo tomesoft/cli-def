@@ -8,6 +8,16 @@ https://cli-def.tomesoft.net
 source:
 https://github.com/tomesoft/cli-def
 
+## What's new in 0.2.0
+
+- Introduced Resolved model layer
+- Added parameter binding (`bind`)
+- Added `validate` command
+- Improved inheritance (`inherit_from`)
+- Added support for relative paths (`../`)
+- Improved help and dump output
+- Introduced `_early` parsing phase
+
 ## ✨ Features
 
 - Define CLI structure declaratively (TOML / Python models)
