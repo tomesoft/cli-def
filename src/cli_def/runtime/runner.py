@@ -41,6 +41,7 @@ class CliRunner:
             default_ctx: CliRuntimeContext|None = None,
             session: CliSession|None = None,
             handle_early_parse: bool = False,
+            dry_run_handler: Callable[[CliEvent], CliHandlerResult|None]|None = None,
             ):
         self.cli_def = cli_def
         self.fallback_handler = fallback_handler
@@ -55,7 +56,8 @@ class CliRunner:
         self.builder: ArgparseBuilder = ArgparseBuilder()
         self.dispatcher: CliDispatcher = CliDispatcher(
             self.cli_def_resolved,
-            fallback_handler=self.fallback_handler
+            fallback_handler=self.fallback_handler,
+            dry_run_handler=dry_run_handler,
         )
 
 

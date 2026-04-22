@@ -39,9 +39,11 @@ def run_dump(event: CliEvent):
     assert cli_def_file
     cli_def_file = Path(cli_def_file)
     if not cli_def_file.exists():
+        msg = f"TOML not found: {cli_def_file}"
+        print(msg)
         return CliHandlerResult.make_error(
             event,
-            f"cli_def could not load: {cli_def_file}",
+            msg,
         )
 
     table = dump_cli_def(
@@ -49,6 +51,14 @@ def run_dump(event: CliEvent):
         as_help=as_help,
         show_resolved=show_resolved,
     )
+
+    if table is None:
+        msg = f"cli_def could not load from {cli_def_file}"
+        print(msg)
+        return CliHandlerResult.make_error(
+            event,
+            msg,
+        )
 
     return CliHandlerResult.make_result(
         event,
@@ -63,10 +73,11 @@ def dump_cli_def(
         as_help: bool,
         show_resolved: bool,
         row_offset: int|None = None,
-    ) -> Table:
+    ) -> Table|None:
 
     cli_def = load_cli_def_path(cli_def_file)
-    assert cli_def
+    if cli_def is None:
+        return None
 
     if show_resolved:
         logging.debug("@@@ RESOLVE @@@")

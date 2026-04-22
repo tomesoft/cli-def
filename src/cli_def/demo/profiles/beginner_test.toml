@@ -1,0 +1,30 @@
+
+[cli_test]
+target_cli = "beginner.toml"
+
+[[cli_test.tests]]
+name = "echo test"
+command = "echo hello"
+expect_stdout = "hello"
+expect_exit_code = 0
+
+[[cli_test.tests]]
+name = "greet test"
+command = ["greet", "John"]
+#expect_stdout = "Hello, Jane!" # NG
+expect_stdout = "Hello, John!"
+expect_exit_code = 0
+
+[[cli_test.tests]]
+name = "greet-john test"
+command = ["greet-john"]
+expect_stdout = "Hello, John!"
+expect_exit_code = 0
+
+[[cli_test.tests]]
+name = "greet-john-loud test"
+command = ["greet-john-loud"]
+expect_stdout = "HELLO, JOHN!"
+expect_exit_code = 0
+#expect_exit_code = 1 # NG
+

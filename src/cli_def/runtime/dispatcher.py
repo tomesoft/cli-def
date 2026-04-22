@@ -25,11 +25,14 @@ class CliDispatcher:
     def __init__(
             self,
             cli_def: ResolvedCliDef,
-            fallback_handler: Callable[[CliEvent], CliHandlerResult|None]|Any = None
+            fallback_handler: Callable[[CliEvent], CliHandlerResult|None]|Any = None,
+            *,
+            dry_run_handler: Callable[[CliEvent], CliHandlerResult|None]|Any = None,
         ):
         self.cli_def : ResolvedCliDef = cli_def
         self.fallback_handler : Callable[[CliEvent], Any] = fallback_handler or type(self)._default_fallback_handler
         self._handler_cache: dict[str, Callable] = {}
+        self._dry_run_handler = dry_run_handler
         self._pre_load_entrypoints()
 
     @staticmethod
@@ -57,7 +60,10 @@ class CliDispatcher:
             ctx: CliRuntimeContext|None = None,
             ) -> Any: # args: argparse.Namespace
         event = self._build_event(args, extra_args=extra_args, ctx=ctx)
-        handler = self._resolve_handler(event.command) or self.fallback_handler
+        if self._dry_run_handler:
+            handler = self._dry_run_handler
+        else:
+            handler = self._resolve_handler(event.command) or self.fallback_handler
         result = handler(event)
         return self.normalize_result(result, event)
 
@@ -84,7 +90,10 @@ class CliDispatcher:
             extra_args=extra_args,
             ctx=ctx,
         )
-        handler = self._resolve_handler(event.command) or self.fallback_handler
+        if self._dry_run_handler:
+            handler = self._dry_run_handler
+        else:
+            handler = self._resolve_handler(event.command) or self.fallback_handler
         result =  handler(event)
         #print(f"@@@@@ result = {result!r}")
         return self.normalize_result(result, event)

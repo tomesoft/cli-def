@@ -28,7 +28,7 @@ entrypoint = "cli_def.demo.handlers:run_demo"
 [cli.dump]
 help = "Dump cli-def AST"
 args = [
-    {key="cli_def_file", mult="1", type="str"},
+    {key="cli_def_file", mult=1, type="str"},
     {key="as_help", option="--as-help", is_flag=true},
     {key="show_resolved", option="--resolve", is_flag=true},
     #{key="check_entrypoints", option="--check", is_flag=true, default=false},
@@ -41,7 +41,7 @@ entrypoint = "cli_def.script.handlers.dump:run_dump"
 [cli.validate]
 help = "Validate cli-def AST"
 args = [
-    {key="cli_def_file", mult="1", type="str"},
+    {key="cli_def_file", mult=1, type="str"},
 ]
 entrypoint = "cli_def.script.handlers.validate:run_validate"
 
@@ -51,7 +51,7 @@ entrypoint = "cli_def.script.handlers.validate:run_validate"
 [cli.run]
 help = "Run CLI"
 args = [
-    {key="cli_def_file", mult="1", type="str"},
+    {key="cli_def_file", mult=1, type="str"},
     {key="no_ctx_propagate", option="--no-ctx-propagate", is_flag=true, default=false},
 ]
 entrypoint = "cli_def.script.handlers.run:run_run"
@@ -105,7 +105,7 @@ help = "Package loding will be done in current process instead of subprocess"
 [[cli.scan.args]]
 key = "check_toml_path"
 option = "--check"
-mult = "1"
+mult = 1
 type = "str"
 help = "Check whether each handler is bound to the entrypoint or not in TOML"
 
@@ -118,7 +118,7 @@ entrypoint = "cli_def.script.handlers.search:run_search"
 
 [[cli.search.args]]
 key = "directory_to_search"
-mult = "1"
+mult = 1
 type = "str"
 
 [[cli.search.args]]
@@ -136,3 +136,16 @@ aliases = ["-D"]
 is_flag = true
 default = false
 help = "dump each cli-def"
+
+# --------------------------------------------------------------------------------
+# test command
+# --------------------------------------------------------------------------------
+[cli.test]
+help = "Test cli-def"
+args = [
+    {key="cli_test_file", mult=1, type="str"},
+    # {key="as_help", option="--as-help", is_flag=true},
+    # {key="show_resolved", option="--resolve", is_flag=true},
+    #{key="check_entrypoints", option="--check", is_flag=true, default=false},
+]
+entrypoint = "cli_def.script.handlers.test:run_test"
