@@ -2,6 +2,8 @@
 from __future__ import annotations
 from typing import Sequence, Iterable, Any, Callable, TYPE_CHECKING, Tuple
 
+import io
+from contextlib import redirect_stdout, redirect_stderr
 import sys
 import argparse
 import logging
@@ -94,6 +96,19 @@ class CliRunner:
             self.session.result_store.add(handler_result)
         #print("@@@8")
         return self._normalize_result([handler_result])
+
+
+    def run_and_capture(self, argv: Iterable[str] | str | None = None) -> Tuple[CliResult, str, str]:
+        out = io.StringIO()
+        err = io.StringIO()
+
+        try:
+            with redirect_stdout(out), redirect_stderr(err):
+                result = self.run(argv)
+        except Exception as e:
+            return CliResult([], exit_code=1), out.getvalue(), err.getvalue()
+
+        return result, out.getvalue(), err.getvalue()
 
 
     def compute_exit_code(self, results: Iterable[CliHandlerResult]):

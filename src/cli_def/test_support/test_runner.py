@@ -3,8 +3,6 @@ from __future__ import annotations
 from typing import Any, Mapping, Tuple
 import tomllib
 from pathlib import Path
-import io
-from contextlib import redirect_stdout, redirect_stderr
 import logging
 
 from ..basic.basic_types import PathLike
@@ -34,6 +32,7 @@ class CliTestRunner:
         self.renderer = PrettyRenderer()
 
         # counters
+        self.skipped = 0
         self.passed = 0
         self.failed = 0
 
@@ -91,27 +90,25 @@ class CliTestRunner:
 
         print(f" {len(tests)} tests found.")
         for i, (name, test) in enumerate(zip(test_names, tests), start=1):
+
             dots = "." * (name_max_width - len(name) + 3)
             print(f"{str(i).rjust(num_max_width)}"
                   f" {name} {dots} ", end="")
-            logging.info(f"{i} test name: {test["name"]!r}, command:{test["command"]!r}")
-            result, stdout, stderr = self.run_and_capture(runner, test["command"])
+            logging.info(f"{i} test name: {name}, command:{test["command"]!r}")
+
+            # skip
+            if test.get("skip", False):
+                self.skipped += 1
+                print(self.renderer.render_text("SKIP", Style(fg_color="yellow")))
+                continue
+
+            # run
+            result, stdout, stderr = runner.run_and_capture(test["command"])
+
+            # check
             self.check_result(test, result, stdout, stderr)
 
         self.format_summary()
-
-
-    def run_and_capture(self, runner: CliRunner, command) -> Tuple[CliResult, str, str]:
-        out = io.StringIO()
-        err = io.StringIO()
-
-        try:
-            with redirect_stdout(out), redirect_stderr(err):
-                result = runner.run(command)
-        except Exception as e:
-            return CliResult([], exit_code=1), out.getvalue(), err.getvalue()
-
-        return result, out.getvalue(), err.getvalue()
 
 
     def check_result(self, test: Mapping[str, Any], result: CliResult, stdout: str, stderr: str):
@@ -119,15 +116,42 @@ class CliTestRunner:
             if "expect_stdout" in test:
                 expect = test["expect_stdout"]
                 self.check_stdout(expect, stdout)
+
+            if "expect_stdout_contains" in test:
+                expect = test["expect_stdout_contains"]
+                self.check_stdout_contains(expect, stdout)
+
+            if "expect_stderr" in test:
+                expect = test["expect_stderr"]
+                self.check_stderr(expect, stderr)
+
+            if "expect_stderr_contains" in test:
+                expect = test["expect_stderr_contains"]
+                self.check_stderr_contains(expect, stderr)
+
             if "expect_exit_code" in test:
                 expect = test["expect_exit_code"]
                 self.check_exit_code(expect, result.exit_code)
+
             self.format_pass("PASS")
             self.passed += 1
         except AssertionError:
             self.failed += 1
         except Exception:
             pass
+
+
+    def check_stdout_contains(self, expect: str, stdout: str):
+        #stdout = stdout.rstrip("\n")
+        logging.info(f"  expect:{expect!r}, stdout:{stdout!r}")
+        try:
+            assert expect in stdout
+        except AssertionError as e:
+            self.format_failed("FAILED")
+            print(self.renderer.render_text("  [stdout] missing:", Style(fg_color="magenta")))
+            print(self.renderer.render_text(f"    expected: {expect!r}", Style(fg_color="magenta")))
+            print(self.renderer.render_text(f"    actual:   {stdout!r}", Style(fg_color="magenta")))
+            raise e
 
 
     def check_stdout(self, expect: str, stdout: str):
@@ -137,9 +161,35 @@ class CliTestRunner:
             assert expect == stdout
         except AssertionError as e:
             self.format_failed("FAILED")
-            print( "  [stdout] mismatch:")
-            print(f"    expected: {expect!r}")
-            print(f"    actual:   {stdout!r}")
+            print(self.renderer.render_text("  [stdout] mismatch:", Style(fg_color="magenta")))
+            print(self.renderer.render_text(f"    expected: {expect!r}", Style(fg_color="magenta")))
+            print(self.renderer.render_text(f"    actual:   {stdout!r}", Style(fg_color="magenta")))
+            raise e
+
+
+    def check_stderr_contains(self, expect: str, stderr: str):
+        #stderr = stderr.rstrip("\n")
+        logging.info(f"  expect:{expect!r}, stderr:{stderr!r}")
+        try:
+            assert expect in stderr
+        except AssertionError as e:
+            self.format_failed("FAILED")
+            print(self.renderer.render_text("  [stderr] missing:", Style(fg_color="magenta")))
+            print(self.renderer.render_text(f"    expected: {expect!r}", Style(fg_color="magenta")))
+            print(self.renderer.render_text(f"    actual:   {stderr!r}", Style(fg_color="magenta")))
+            raise e
+
+
+    def check_stderr(self, expect: str, stderr: str):
+        stderr = stderr.rstrip("\n")
+        logging.info(f"  expect:{expect!r}, stderr:{stderr!r}")
+        try:
+            assert expect == stderr
+        except AssertionError as e:
+            self.format_failed("FAILED")
+            print(self.renderer.render_text("  [stderr] mismatch:", Style(fg_color="magenta")))
+            print(self.renderer.render_text(f"    expected: {expect!r}", Style(fg_color="magenta")))
+            print(self.renderer.render_text(f"    actual:   {stderr!r}", Style(fg_color="magenta")))
             raise e
 
 
@@ -149,19 +199,26 @@ class CliTestRunner:
             assert expect == exit_code
         except AssertionError as e:
             self.format_failed("FAILED")
-            print( "  [exit_code] mismatch:")
-            print(f"    expected: {expect!r}")
-            print(f"    actual:   {exit_code!r}")
+            print(self.renderer.render_text("  [exit_code] mismatch:", Style(fg_color="magenta")))
+            print(self.renderer.render_text(f"    expected: {expect!r}", Style(fg_color="magenta")))
+            print(self.renderer.render_text(f"    actual:   {exit_code!r}", Style(fg_color="magenta")))
             raise e
+
 
     def format_pass(self, message: str):
         print(self.renderer.render_text(message, Style(fg_color="green")))
 
+
     def format_failed(self, message: str):
         print(self.renderer.render_text(message, Style(fg_color="red")))
 
+
     def format_summary(self):
         summary = []
+        if self.skipped:
+            summary.append(self.renderer.render_text(
+                f"{self.skipped} skipped, ", Style(fg_color="yellow")
+            ))
         if self.failed:
             summary.append(self.renderer.render_text(
                 f"{self.failed} failed, ", Style(fg_color="red")

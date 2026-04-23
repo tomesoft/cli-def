@@ -142,6 +142,9 @@ help = "dump each cli-def"
 # --------------------------------------------------------------------------------
 [cli.test]
 help = "Test cli-def"
+
+[cli.test.run]
+help = "Run cli-def test"
 args = [
     {key="cli_test_file", mult=1, type="str"},
     # {key="as_help", option="--as-help", is_flag=true},
@@ -149,3 +152,11 @@ args = [
     #{key="check_entrypoints", option="--check", is_flag=true, default=false},
 ]
 entrypoint = "cli_def.script.handlers.test:run_test"
+
+[cli.test.generate]
+help = "Generate cli-def test"
+args = [
+    {key="cli_def_file", mult=1, type="str"},
+    {key="with_output", option="--with-output", is_flag=true},
+]
+entrypoint = "cli_def.script.handlers.test:generate_test"

@@ -18,20 +18,48 @@ from ...ops import (
 from ...ops.utils.renderer import Table
 
 from ...test_support.test_runner import CliTestRunner
-
+from ...test_support.test_generator import CliTestGenerator
 
 # --------------------------------------------------------------------------------
 #
-# test command handler
+# test run command handler
 #
 # --------------------------------------------------------------------------------
-@cli_def_handler("/cli-def/test", description="builtin test command handler", late_binding=True)
+@cli_def_handler("/cli-def/test/run", description="builtin run test command handler", late_binding=True)
 def run_test(event: CliEvent):
 
     cli_test_file = event.params.get("cli_test_file")
     assert cli_test_file
 
-    logging.info("=== test command ===")
+    logging.info("=== run test command ===")
 
     test_runner = CliTestRunner()
     test_runner.run(cli_test_file)
+
+
+# --------------------------------------------------------------------------------
+#
+# test generate command handler
+#
+# --------------------------------------------------------------------------------
+@cli_def_handler("/cli-def/test/generate", description="builtin generate test command handler", late_binding=True)
+def generate_test(event: CliEvent):
+
+    cli_def_file = event.params.get("cli_def_file")
+    with_output = event.params.get("with_output") or False
+    assert cli_def_file
+
+    logging.info("=== test command ===")
+
+    test_generator = CliTestGenerator()
+    result = test_generator.generate_from(cli_def_file, with_output=with_output)
+
+    if result is None:
+        msg = f"Could not load cli-def from: {cli_def_file}"
+        return CliHandlerResult.make_error(event, msg)
+
+    for l in result:
+        print(l)
+
+    return CliHandlerResult.make_result(event, data=result)
+
