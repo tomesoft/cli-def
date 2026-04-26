@@ -59,6 +59,9 @@ class ResolvedCliDef(
             for n in self._commands:
                 n._parent = self
 
+    @property
+    def is_leaf(self) -> bool:
+        return self._commands is None or len(self._commands) == 0
     
     @property
     def prompt(self) -> str|None:
