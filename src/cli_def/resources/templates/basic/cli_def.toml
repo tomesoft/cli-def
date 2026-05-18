@@ -1,0 +1,12 @@
+# cli_def.toml
+
+[cli]
+key = "myapp"
+help = "My CLI app"
+
+[cli.hello]
+help = "Say hello"
+args = [
+  {key="name", mult="?", type="str"}
+]
+entrypoint = "handlers:hello"

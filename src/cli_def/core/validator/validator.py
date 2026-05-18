@@ -36,6 +36,7 @@ class CliDefValidationCode(Enum):
 
     E_CMD_DUPLICATE_OPTION = (auto(), CliDefValidationCategory.CMD, CliDefValidationLevel.ERROR)
     E_CMD_CONFLICT_ALIAS = (auto(), CliDefValidationCategory.CMD, CliDefValidationLevel.ERROR)
+    E_CMD_INVALID_ENTRYPOINT = (auto(), CliDefValidationCategory.CMD, CliDefValidationLevel.ERROR)
     W_CMD_UNUSED_BIND = (auto(), CliDefValidationCategory.CMD, CliDefValidationLevel.WARNING)
 
     def __init__(self, id, category, level):
@@ -142,6 +143,16 @@ class CliDefValidator:
                         )
                     )
 
+        # 1.x check entrypoint
+        if cmd.entrypoint is not None:
+            if not self.validate_entrypoint_syntax(cmd.entrypoint):
+                self._register(
+                    CliDefValidationRecord(
+                        CliDefValidationCode.E_CMD_INVALID_ENTRYPOINT,
+                        cmd,
+                        f"'{cmd.entrypoint}' is not valid entrypint syntax"
+                    )
+                )
 
         # 2 check arguments
         for arg in cmd.arguments:
@@ -209,3 +220,24 @@ class CliDefValidator:
         else:
             mul = 1
         return mult.accepts_len(mul)
+
+
+    def validate_entrypoint_syntax(self, value: str) -> bool:
+        parts = value.split(":")
+
+        if len(parts) != 2:
+            return False
+
+        module_name, func_name = parts
+
+        if not module_name or not func_name:
+            return False
+
+        for part in module_name.split("."):
+            if not part.isidentifier():
+                return False
+
+        if not func_name.isidentifier():
+            return False
+
+        return True
