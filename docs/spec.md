@@ -52,6 +52,27 @@ entrypoint = "module:function"
 |entrypoint|str|optional|実行関数
 |inherit_from|list[str]|optional|継承元
 |bind|table|optional|パラメータ固定
+|add_help|bool|optional|argparse only: enable or disable automatic `-h` / `--help`
+
+### 3.2 Forwarding Help to Another CLI
+
+For a command whose handler forwards unrecognized arguments to another CLI,
+set `add_help = false` on that command:
+
+```toml
+[cli.plugin]
+help = "Execute plugin commands"
+add_help = false
+entrypoint = "myapp.plugins:dispatch"
+```
+
+The argparse backend then leaves `-h` and `--help` in the unrecognized arguments
+instead of printing the forwarding command's help and exiting. The handler can
+pass these arguments to the downstream CLI through `event.extra_args`.
+
+When omitted, existing defaults are preserved: subcommands have automatic help,
+while commands built as standalone parsers have automatic help only when their
+`help` field is set. This setting does not affect the Click backend.
 
 ## 4. Argument Definition
 

@@ -65,6 +65,54 @@ def test_argparse_builder_hello_world(hello_world_cli_def_path):
     assert "John" in parsed.your_name
 
 
+@pytest.mark.parametrize("standalone", [False, True])
+@pytest.mark.parametrize("help_flag", ["-h", "--help"])
+def test_command_can_forward_help(standalone, help_flag):
+    cli_def = CliDefParser().parse_from_mapping({
+        "cli": {
+            "key": "tool",
+            "plugin": {"help": "Plugin commands", "add_help": False},
+        },
+    })
+    resolved = CliDefResolver().resolve(cli_def)
+    builder = ArgparseBuilder()
+    parser = (
+        builder.build_single_command(resolved.commands[0])
+        if standalone else builder.build(resolved)
+    )
+    remaining_args = ["child", "input.arxml", help_flag]
+    argv = remaining_args if standalone else ["plugin", *remaining_args]
+
+    parsed, remaining = parser.parse_known_args(argv)
+
+    assert parsed._command.key == "plugin"
+    assert remaining == remaining_args
+
+
+@pytest.mark.parametrize("standalone", [False, True])
+@pytest.mark.parametrize("add_help", [None, True])
+def test_command_keeps_automatic_help(standalone, add_help, capsys):
+    command = {"help": "Plugin commands"}
+    if add_help is not None:
+        command["add_help"] = add_help
+    cli_def = CliDefParser().parse_from_mapping({
+        "cli": {"key": "tool", "plugin": command},
+    })
+    resolved = CliDefResolver().resolve(cli_def)
+    builder = ArgparseBuilder()
+    parser = (
+        builder.build_single_command(resolved.commands[0])
+        if standalone else builder.build(resolved)
+    )
+    argv = ["--help"] if standalone else ["plugin", "--help"]
+
+    with pytest.raises(SystemExit) as exc_info:
+        parser.parse_known_args(argv)
+
+    assert exc_info.value.code == 0
+    assert "-h, --help" in capsys.readouterr().out
+
+
 def test_argparse_builder_minimum(minimum_cli_def_path):
     cliDef = prepare_cli_def(minimum_cli_def_path)
     assert cliDef is not None

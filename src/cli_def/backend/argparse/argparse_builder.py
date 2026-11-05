@@ -171,6 +171,7 @@ class ArgparseBuilder(BuilderProtocol):
             parser = subparsers.add_parser(
                 cmdDef.key,
                 help = cmdDef.help,
+                add_help=cmdDef.definition.extra_defs.get("add_help", True),
                 parents=parent_parsers,
             )
         else:
@@ -181,7 +182,9 @@ class ArgparseBuilder(BuilderProtocol):
             parser = argparse.ArgumentParser(
                 cmdDef.key,
                 parents=parent_parsers,
-                add_help=True if cmdDef.help is not None else False,
+                add_help=cmdDef.definition.extra_defs.get(
+                    "add_help", cmdDef.help is not None
+                ),
                 # **kwargs
             )
         self.build_arguments(cmdDef.arguments, parser)
